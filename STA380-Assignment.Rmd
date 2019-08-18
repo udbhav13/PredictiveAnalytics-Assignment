@@ -95,9 +95,11 @@ N = nrow(social_ns)
 #CH_grid
 #plot(k_grid,CH_grid)
 ch_data = data.frame(k_grid, CH_grid)
+
+```
+```{r pressure, echo=FALSE}
 chp = ggplot(data = ch_data) + 
   geom_point(mapping = aes(x = ch_data$k_grid, y = ch_data$CH_grid))
-
 
 # Elbow method
 wss = fviz_nbclust(social_ns, kmeans, method = "wss") +
@@ -111,6 +113,10 @@ grid.arrange(wss,sil, nrow = 1, ncol = 2)
 grid.arrange(chp, nrow = 1, ncol = 1)
 
 ```
+
+
+
+
 ```{r pressure}
 library(LICORS)
 
