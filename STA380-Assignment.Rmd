@@ -15,8 +15,315 @@ This is an R Markdown format used for publishing markdown documents to GitHub. W
 
 You can include R code in the document as follows:
 
-```{Setting up work directory}
-setwd("/Users/udbhavverma/Documents/Study materials/Predictive Analytics/Predictive Analytics 2/Material Github/STA380-master/data")
+```{r pressure}
+library("ggplot2")
+library(tidyverse)  # data manipulation
+library(cluster)    # clustering algorithms
+library(factoextra)
+library(NbClust)
+library(corrplot)
+library(gridExtra)
+
+
+getwd()
+social <- read.csv("social_marketing.csv",header = TRUE)
+#View(social)
+
+social = read.csv("social_marketing.csv",row.names="X")
+dim(social)
+social = na.omit(social)
+social_s = scale(social,center=TRUE, scale=TRUE)
+social_n = social/rowSums(social)
+social_ns = scale(social_n,center=TRUE, scale=TRUE)
+#summary(social_ns)
+cormat <- cor(social_ns)
+corrplot(cormat,method = 'shade',type = 'upper')
+
+# cormat <- round(cor(social_ns),2)
+# cormat.topleft <- round(cor(social_ns[,1:18]),2)
+# cormat.bottomright <- round(cor(social_ns[,19:36]),2)
+# 
+# 
+# 
+# #head(cormat)
+# ggcorrplot(cormat)
+# ggcorrplot(cormat.topleft)
+# ggcorrplot(cormat.bottomright)
+
+```
+
+
+```{r pressure}
+library(foreach)
+set.seed(12)
+#
+# wss <- (nrow(social_ns)-1)*sum(apply(social_ns,2,var))
+k_grid = seq(2, 7, by=1)
+CH_grid = seq(2,7, by=1)
+CH_grid
+k_grid
+N = nrow(social_ns)
+# 
+# for (i in 2:20) wss[i] <- sum(kmeans(social_ns, 
+#    centers=i)$withinss)
+# plot(1:20, wss, type="b", xlab="Number of Clusters",
+#   ylab="Within groups sum of squares")
+# 
+# for (i in 2:20) {
+#   cluster = kmeans(social_ns, i, nstart = 50)
+#   B = cluster$Betweenss
+#   W = cluster$tot.withinss
+#   CH[i] = (B/W)*((N-i)/(i-1))
+# } 
+# 
+# print(CH)
+# 
+# CH_grid = foreach(k = k_grid, combine='c') %do% {
+# cluster_k = kmeans(social_ns, k, nstart=50) 
+# W = cluster_k$tot.withinss
+# B = cluster_k$betweenss
+# CH = (B/W)*((N-k)/(k-1))
+# CH
+# }
+# CH_grid
+ for (i in 1:6) {
+  cluster_k = kmeans(social_ns, k_grid[i], nstart=50)
+  W = cluster_k$tot.withinss
+  B = cluster_k$betweenss
+  CH_grid[i] = (B/W)*((N-k_grid[i])/(k_grid[i]-1))
+}
+#CH_grid
+#plot(k_grid,CH_grid)
+ch_data = data.frame(k_grid, CH_grid)
+chp = ggplot(data = ch_data) + 
+  geom_point(mapping = aes(x = ch_data$k_grid, y = ch_data$CH_grid))
+
+
+# Elbow method
+wss = fviz_nbclust(social_ns, kmeans, method = "wss") +
+  labs(subtitle = "Elbow method")
+
+# Silhouette method
+sil = fviz_nbclust(social_ns, kmeans, method = "silhouette")+
+  labs(subtitle = "Silhouette method")
+
+grid.arrange(wss,sil, nrow = 1, ncol = 2)
+grid.arrange(chp, nrow = 1, ncol = 1)
+
+```
+```{r pressure}
+library(LICORS)
+
+# K-Means Clustering with 3 clusters
+set.seed(1)
+
+# 3 clusters
+set.seed(3)
+k=3
+clust3 = kmeans(social_ns, k, nstart=25)
+print("cluster stat::k=3")
+print("size of cluster")
+clust3$size
+print("withinss")
+clust3$withinss
+print("Total withinss")
+clust3$tot.withinss
+print("betweenss")
+clust3$betweenss
+print("CH")
+(clust3$betweenss/clust3$tot.withinss)*((nrow(social_ns)-k)/(k-1))
+
+# Visualizing the clusters on a dimensionally reduced plot
+clus3plot = fviz_cluster(clust3, data = social_ns, 
+             ellipse.type = "euclid", # Concentration ellipse
+             ggtheme = theme_classic(),geom = c("point")
+             )
+# #Initializing kmeans++
+# clust3p = kmeanspp(social_ns, k=k, nstart=50)
+# clus3pplot = fviz_cluster(clust3p, data = social_ns, 
+#              ellipse.type = "euclid", # Concentration ellipse
+#              ggtheme = theme_classic(),geom = c("point")
+#              )
+
+# 4 clusters
+set.seed(4)
+k=4
+clust4 = kmeans(social_ns, k, nstart=25)
+print("cluster stat::k=4")
+print("size of cluster")
+clust4$size
+print("withinss")
+clust4$withinss
+print("Total withinss")
+clust4$tot.withinss
+print("betweenss")
+clust4$betweenss
+print("CH")
+(clust4$betweenss/clust4$tot.withinss)*((nrow(social_ns)-k)/(k-1))
+
+# Visualizing the clusters on a dimensionally reduced plot
+clus4plot = fviz_cluster(clust4, data = social_ns, 
+             ellipse.type = "euclid", # Concentration ellipse
+             ggtheme = theme_classic(),geom = c("point")
+             )
+#Initializing kmeans++
+# clust4p = kmeanspp(social_ns, k=k, nstart=50)
+# print("cluster stat::")
+# print("size of cluster")
+# clust4p$size
+# print("withinss")
+# clust4p$withinss
+# print("Total withinss")
+# clust4p$tot.withinss
+# print("betweenss")
+# clust4p$betweenss
+# print("CH")
+# (clust4p$betweenss/clust4p$tot.withinss)*((nrow(social_ns)-k)/(k-1))
+# 
+# clus3pplot = fviz_cluster(clust4p, data = social_ns, 
+#              ellipse.type = "euclid", # Concentration ellipse
+#              ggtheme = theme_classic(),geom = c("point")
+#              )
+# grid.arrange(clus3plot,clus3pplot,ncol = 2)
+# 
+
+# 5 clusters
+set.seed(3)
+k=5
+clust5 = kmeans(social_ns, k, nstart=25)
+print("cluster stat::k=5")
+print("size of cluster")
+clust5$size
+print("withinss")
+clust5$withinss
+print("Total withinss")
+clust5$tot.withinss
+print("betweenss")
+clust5$betweenss
+print("CH")
+(clust5$betweenss/clust5$tot.withinss)*((nrow(social_ns)-k)/(k-1))
+
+# Visualizing the clusters on a dimensionally reduced plot
+clus5plot = fviz_cluster(clust5, data = social_ns, 
+             ellipse.type = "euclid", # Concentration ellipse
+             ggtheme = theme_classic(),geom = c("point")
+             )
+#Initializing kmeans++
+# clust5p = kmeanspp(social_ns, k=k, nstart=50)
+# clus3pplot = fviz_cluster(clust5p, data = social_ns, 
+#              ellipse.type = "euclid", # Concentration ellipse
+#              ggtheme = theme_classic(),geom = c("point")
+#              )
+# grid.arrange(clus3plot,clus3pplot,ncol = 2)
+
+# 6 clusters
+set.seed(3)
+k=6
+clust6 = kmeans(social_ns, k, nstart=25)
+print("cluster stat::")
+print("size of cluster")
+clust6$size
+print("withinss")
+clust6$withinss
+print("Total withinss")
+clust6$tot.withinss
+print("betweenss")
+clust6$betweenss
+print("CH")
+(clust6$betweenss/clust6$tot.withinss)*((nrow(social_ns)-k)/(k-1))
+
+# Visualizing the clusters on a dimensionally reduced plot
+clus6plot = fviz_cluster(clust6, data = social_ns, 
+             ellipse.type = "euclid", # Concentration ellipse
+             ggtheme = theme_classic(),geom = c("point")
+             )
+
+grid.arrange(clus3plot,clus4plot,clus5plot,clus6plot, nrow = 2, ncol = 2)
+
+
+#perform PCA
+
+pr.out = prcomp(social_ns,scale=TRUE)
+plot(pr.out)
+#summary(pr.out)
+
+scores = pr.out$x
+qplot(scores[,1], scores[,2], xlab='Component 1', colour = clust2$cluster, ylab='Component 2')
+
+loadings = pr.out$rotation
+o1 = order(loadings[,1], decreasing=TRUE)
+print("PC1 head")
+colnames(social_ns)[head(o1,10)]
+print("PC1 tail")
+colnames(social_ns)[tail(o1,10)]
+ 
+o2 = order(loadings[,2], decreasing=TRUE)
+print("PC2 head")
+colnames(social_ns)[head(o2,10)]
+print("PC2 tail")
+colnames(social_ns)[tail(o2,10)]
+
+
+```
+```{r cluster level summaries}
+library(mosaic)
+library(tidyverse)
+
+attach(social)
+social_grp2 = social
+social_grp2$influencers = photo_sharing+chatter+sports_fandom+travel+outdoors
+social_grp2$health.enthusiasts= food+cooking+home_and_garden+health_nutrition+personal_fitness+sports_playing
+social_grp2$elderly = politics+news+religion+current_events+family+parenting+shopping+business+small_business+eco+automotive
+social_grp2$teens = tv_film+music+online_gaming+beauty+dating+fashion+college_uni+school+art+crafts+computers
+social_grp2$others = spam+uncategorized+adult
+# append cluster assignment
+mydata <- data.frame(social_grp2, fit$cluster)
+
+# get cluster means 
+agg = aggregate(social,by=list(clust2$cluster),FUN=mean)
+agg_T = t(agg)
+
+#agg_T %>% mutate(stDev = apply(agg_T,1,sd))
+agg_T
+#plot(agg_T)
+# append cluster assignment
+mydata <- data.frame(social_grp2, fit$cluster)
+mydata <- data.frame(mydata, clust2$cluster)
+#colnames(mydata)
+
+mydata_summ = mydata %>%
+  group_by(clust2.cluster)  %>%  # group the data points by model name
+  summarize(health.enthusiasts.mean = mean(health.enthusiasts),
+            influencers.mean = mean(influencers),
+            elderly.mean = mean(elderly),
+            teens.mean = mean(teens),
+            others.mean = mean(others))  # calculate a mean for #each model
+
+mydata_summ
+# # still not in order...
+# ggplot(mydata_summ, aes(x=cluster, y=health.enthusiasts.mean)) + 
+#   geom_bar(stat='identity') + 
+#   coord_flip()
+# 
+# # reorder the x labels
+# ggplot(mydata_summ, aes(x=reorder(fit.cluster, health.enthusiasts.mean), y=health.enthusiasts.mean)) + 
+#   geom_bar(stat='identity') + 
+#   coord_flip()
+
+par(mfrow=c(2,2))
+g = ggplot(mydata, aes(x=elderly))
+g + geom_density(aes(fill=factor(clust2.cluster)))
+
+g = ggplot(mydata, aes(x=health.enthusiasts))
+g + geom_density(aes(fill=factor(clust2.cluster)))
+
+g = ggplot(mydata, aes(x=teens))
+g + geom_density(aes(fill=factor(clust2.cluster)))
+
+g = ggplot(mydata, aes(x=others))
+g + geom_density(aes(fill=factor(clust2.cluster)))
+
+
 
 
 ```
