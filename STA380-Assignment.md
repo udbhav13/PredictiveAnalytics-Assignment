@@ -58,104 +58,6 @@ Step 1: Data loading and exploration
 You can include R code in the document as
     follows:
 
-    ## ── Attaching packages ──────────────────────────────────────────────────── tidyverse 1.2.1 ──
-
-    ## ✔ tibble  2.1.3     ✔ purrr   0.3.2
-    ## ✔ tidyr   0.8.3     ✔ dplyr   0.8.3
-    ## ✔ readr   1.3.1     ✔ stringr 1.4.0
-    ## ✔ tibble  2.1.3     ✔ forcats 0.4.0
-
-    ## ── Conflicts ─────────────────────────────────────────────────────── tidyverse_conflicts() ──
-    ## ✖ dplyr::filter() masks stats::filter()
-    ## ✖ dplyr::lag()    masks stats::lag()
-
-    ## Welcome! Related Books: `Practical Guide To Cluster Analysis in R` at https://goo.gl/13EFCZ
-
-    ## corrplot 0.84 loaded
-
-    ## 
-    ## Attaching package: 'gridExtra'
-
-    ## The following object is masked from 'package:dplyr':
-    ## 
-    ##     combine
-
-    ## Loading required package: lattice
-
-    ## Loading required package: ggformula
-
-    ## Loading required package: ggstance
-
-    ## 
-    ## Attaching package: 'ggstance'
-
-    ## The following objects are masked from 'package:ggplot2':
-    ## 
-    ##     geom_errorbarh, GeomErrorbarh
-
-    ## 
-    ## New to ggformula?  Try the tutorials: 
-    ##  learnr::run_tutorial("introduction", package = "ggformula")
-    ##  learnr::run_tutorial("refining", package = "ggformula")
-
-    ## Loading required package: mosaicData
-
-    ## Loading required package: Matrix
-
-    ## 
-    ## Attaching package: 'Matrix'
-
-    ## The following object is masked from 'package:tidyr':
-    ## 
-    ##     expand
-
-    ## Registered S3 method overwritten by 'mosaic':
-    ##   method                           from   
-    ##   fortify.SpatialPolygonsDataFrame ggplot2
-
-    ## 
-    ## The 'mosaic' package masks several functions from core packages in order to add 
-    ## additional features.  The original behavior of these functions should not be affected by this.
-    ## 
-    ## Note: If you use the Matrix package, be sure to load it BEFORE loading mosaic.
-
-    ## 
-    ## Attaching package: 'mosaic'
-
-    ## The following object is masked from 'package:Matrix':
-    ## 
-    ##     mean
-
-    ## The following objects are masked from 'package:dplyr':
-    ## 
-    ##     count, do, tally
-
-    ## The following object is masked from 'package:purrr':
-    ## 
-    ##     cross
-
-    ## The following object is masked from 'package:ggplot2':
-    ## 
-    ##     stat
-
-    ## The following objects are masked from 'package:stats':
-    ## 
-    ##     binom.test, cor, cor.test, cov, fivenum, IQR, median,
-    ##     prop.test, quantile, sd, t.test, var
-
-    ## The following objects are masked from 'package:base':
-    ## 
-    ##     max, mean, min, prod, range, sample, sum
-
-    ## 
-    ## Attaching package: 'foreach'
-
-    ## The following objects are masked from 'package:purrr':
-    ## 
-    ##     accumulate, when
-
-    ## [1] "/Users/udbhavverma/Documents/PredictiveAnalytics-Assignment"
-
     ##     chatter        current_events        travel        photo_sharing    
     ##  Min.   :-1.3328   Min.   :-0.9926   Min.   :-0.8266   Min.   :-1.0910  
     ##  1st Qu.:-0.7621   1st Qu.:-0.6804   1st Qu.:-0.8266   1st Qu.:-0.7585  
@@ -239,23 +141,7 @@ also not able to decide upon a rational number of clusters for the
 segment. 10 clusters in the data is too high to design a targeted
 marketing strategy for the custome segments.
 
-Let’s explore how 3,4,5 and 6 clusters look
-    like.
-
-    ## Warning in withinss[i] <- clust$withinss: number of items to replace is not
-    ## a multiple of replacement length
-    
-    ## Warning in withinss[i] <- clust$withinss: number of items to replace is not
-    ## a multiple of replacement length
-    
-    ## Warning in withinss[i] <- clust$withinss: number of items to replace is not
-    ## a multiple of replacement length
-    
-    ## Warning in withinss[i] <- clust$withinss: number of items to replace is not
-    ## a multiple of replacement length
-    
-    ## Warning in withinss[i] <- clust$withinss: number of items to replace is not
-    ## a multiple of replacement length
+Let’s explore how 3,4,5 and 6 clusters look like.
 
 ![](STA380-Assignment_files/figure-gfm/unnamed-chunk-3-1.png)<!-- -->
 
@@ -308,24 +194,6 @@ Let’s explore what these principle comonents are actually made of
     ##  [7] "cooking"          "outdoors"         "personal_fitness"
     ## [10] "health_nutrition"
 
-``` r
-set.seed(12)
-
-attach(social)
-social_grp2 = social
-social_grp2$health.enthusiasts= food+cooking+home_and_garden+health_nutrition+personal_fitness+sports_playing+sports_fandom
-social_grp2$elderly = politics+news+religion+current_events+family+parenting+shopping+business+small_business+eco+automotive
-social_grp2$youth = tv_film+music+online_gaming+beauty+dating+fashion+college_uni+school+art+crafts+computers+travel+outdoors+chatter
-social_grp2$othr = spam+uncategorized+adult+photo_sharing
-
-
-cluster_final = kmeans(social_ns, 3, nstart=25)
-
-# append cluster assignment
-mydata <- data.frame(social_grp2, cluster_final$cluster)
-#View(mydata)
-```
-
 Cluster Profiling:
 
 After looking at the top and bottom of first 2 principal components, we
@@ -350,19 +218,6 @@ Cataegories such as adult, spam, uncategorized into others and are not
 considered in creation of these macro categories of tweets.
 
 Let’s look at the mean for these mcro categories by cluster -
-
-    ## Warning: funs() is soft deprecated as of dplyr 0.8.0
-    ## Please use a list of either functions or lambdas: 
-    ## 
-    ##   # Simple named list: 
-    ##   list(mean = mean, median = median)
-    ## 
-    ##   # Auto named with `tibble::lst()`: 
-    ##   tibble::lst(mean, median)
-    ## 
-    ##   # Using lambdas
-    ##   list(~ mean(., trim = .2), ~ median(., na.rm = TRUE))
-    ## This warning is displayed once per session.
 
     ## # A tibble: 3 x 4
     ##   cluster_final.cluster health.enthusiasts elderly youth
