@@ -1,5 +1,5 @@
 ---
-title: "Untitled"
+title: "Market segmentation and Association rule mining"
 output: github_document
 ---
 
@@ -7,100 +7,66 @@ output: github_document
 knitr::opts_chunk$set(echo = TRUE)
 ```
 
-## GitHub Documents
+## Market segmentation
 
-This is an R Markdown format used for publishing markdown documents to GitHub. When you click the **Knit** button all R code chunks are run and a markdown file (.md) suitable for publishing to GitHub is generated.
+Consider the data in social_marketing.csv. This was data collected in the course of a market-research study using followers of the Twitter account of a large consumer brand that shall remain nameless---let's call it "NutrientH20" just to have a label. The goal here was for NutrientH20 to understand its social-media audience a little bit better, so that it could hone its messaging a little more sharply.
 
-## Including Code
+A bit of background on the data collection: the advertising firm who runs NutrientH20's online-advertising campaigns took a sample of the brand's Twitter followers. They collected every Twitter post ("tweet") by each of those followers over a seven-day period in June 2014. Every post was examined by a human annotator contracted through Amazon's Mechanical Turk service. Each tweet was categorized based on its content using a pre-specified scheme of 36 different categories, each representing a broad area of interest (e.g. politics, sports, family, etc.) Annotators were allowed to classify a post as belonging to more than one category. For example, a hypothetical post such as "I'm really excited to see grandpa go wreck shop in his geriatic soccer league this Sunday!" might be categorized as both "family" and "sports." You get the picture.
+
+Each row of social_marketing.csv represents one user, labeled by a random (anonymous, unique) 9-digit alphanumeric code. Each column represents an interest, which are labeled along the top of the data file. The entries are the number of posts by a given user that fell into the given category. Two interests of note here are "spam" (i.e. unsolicited advertising) and "adult" (posts that are pornographic, salacious, or explicitly sexual). There are a lot of spam and pornography "bots" on Twitter; while these have been filtered out of the data set to some extent, there will certainly be some that slip through. There's also an "uncategorized" label. Annotators were told to use this sparingly, but it's there to capture posts that don't fit at all into any of the listed interest categories. (A lot of annotators may used the "chatter" category for this as well.) Keep in mind as you examine the data that you cannot expect perfect annotations of all posts. Some annotators might have simply been asleep at the wheel some, or even all, of the time! Thus there is some inevitable error and noisiness in the annotation process.
+
+Your task to is analyze this data as you see fit, and to prepare a concise report for NutrientH20 that identifies any interesting market segments that appear to stand out in their social-media audience. You have complete freedom in deciding how to pre-process the data and how to define "market segment." (Is it a group of correlated interests? A cluster? A latent factor? Etc.) Just use the data to come up with some interesting, well-supported insights about the audience, and be clear about what you did.
+
+## Analysis:
+Step 1: Data loading and exploration
 
 You can include R code in the document as follows:
 
-```{r pressure}
-library("ggplot2")
+```{r  echo = FALSE}
+library(ggplot2)
 library(tidyverse)  # data manipulation
 library(cluster)    # clustering algorithms
 library(factoextra)
 library(NbClust)
 library(corrplot)
 library(gridExtra)
+library(ggcorrplot)
+library(mosaic)
+library(foreach)
+
 
 
 getwd()
 social <- read.csv("social_marketing.csv",header = TRUE)
 #View(social)
 
-social = read.csv("social_marketing.csv",row.names="X")
-dim(social)
+social = read.csv("https://raw.githubusercontent.com/jgscott/STA380/master/data/social_marketing.csv",row.names="X")
+#dim(social)
+
 social = na.omit(social)
 social_s = scale(social,center=TRUE, scale=TRUE)
 social_n = social/rowSums(social)
 social_ns = scale(social_n,center=TRUE, scale=TRUE)
-#summary(social_ns)
+summary(social_ns)
 cormat <- cor(social_ns)
-corrplot(cormat,method = 'shade',type = 'upper')
+all.plot = corrplot(cormat,method = 'shade',type = 'lower')
 
-# cormat <- round(cor(social_ns),2)
-# cormat.topleft <- round(cor(social_ns[,1:18]),2)
-# cormat.bottomright <- round(cor(social_ns[,19:36]),2)
-# 
-# 
-# 
-# #head(cormat)
-# ggcorrplot(cormat)
-# ggcorrplot(cormat.topleft)
-# ggcorrplot(cormat.bottomright)
+cormat.topleft <- round(cor(social_ns[,1:18]),2)
+cormat.bottomright <- round(cor(social_ns[,19:36]),2)
+
+topleft = corrplot(cormat.topleft,method = 'shade',type = 'lower')
+bottomright = corrplot(cormat.bottomright,method = 'shade',type = 'lower')
 
 ```
+Few insights - 
+  * Categories like fashion, beauty, dating etc are correlated, similarly for .
+  * Categories like spam, adult are also correlated
+  
+  * Categories such as spam, adult have high range but the values till 3rd quartile are very low. For example in spam, 3rd quartile is -0.067 and maximum value is 32
 
+To decide how many clusters exist in our data, let's look at Elbow and Silhouette plots to explore further.
 
-```{r pressure}
-library(foreach)
-set.seed(12)
-#
-# wss <- (nrow(social_ns)-1)*sum(apply(social_ns,2,var))
-k_grid = seq(2, 7, by=1)
-CH_grid = seq(2,7, by=1)
-CH_grid
-k_grid
-N = nrow(social_ns)
-# 
-# for (i in 2:20) wss[i] <- sum(kmeans(social_ns, 
-#    centers=i)$withinss)
-# plot(1:20, wss, type="b", xlab="Number of Clusters",
-#   ylab="Within groups sum of squares")
-# 
-# for (i in 2:20) {
-#   cluster = kmeans(social_ns, i, nstart = 50)
-#   B = cluster$Betweenss
-#   W = cluster$tot.withinss
-#   CH[i] = (B/W)*((N-i)/(i-1))
-# } 
-# 
-# print(CH)
-# 
-# CH_grid = foreach(k = k_grid, combine='c') %do% {
-# cluster_k = kmeans(social_ns, k, nstart=50) 
-# W = cluster_k$tot.withinss
-# B = cluster_k$betweenss
-# CH = (B/W)*((N-k)/(k-1))
-# CH
-# }
-# CH_grid
- for (i in 1:6) {
-  cluster_k = kmeans(social_ns, k_grid[i], nstart=50)
-  W = cluster_k$tot.withinss
-  B = cluster_k$betweenss
-  CH_grid[i] = (B/W)*((N-k_grid[i])/(k_grid[i]-1))
-}
-#CH_grid
-#plot(k_grid,CH_grid)
-ch_data = data.frame(k_grid, CH_grid)
-
-```
-```{r pressure, echo=FALSE}
-chp = ggplot(data = ch_data) + 
-  geom_point(mapping = aes(x = ch_data$k_grid, y = ch_data$CH_grid))
-
+```{r, echo=FALSE}
 # Elbow method
 wss = fviz_nbclust(social_ns, kmeans, method = "wss") +
   labs(subtitle = "Elbow method")
@@ -110,151 +76,94 @@ sil = fviz_nbclust(social_ns, kmeans, method = "silhouette")+
   labs(subtitle = "Silhouette method")
 
 grid.arrange(wss,sil, nrow = 1, ncol = 2)
-grid.arrange(chp, nrow = 1, ncol = 1)
 
 ```
 
+There is no elbow formation in the elbow plot. The silhouette plot is also not able to decide upon a rational number of clusters for the segment. 10 clusters in the data is too high to design a targeted marketing strategy for the custome segments.
 
+Let's explore how 3,4,5 and 6 clusters look like. 
 
-
-```{r pressure}
+```{r echo=FALSE}
 library(LICORS)
 
 # K-Means Clustering with 3 clusters
-set.seed(1)
-
+set.seed(12)
+#size=c()
+cluster = c()
+withinss = c()
+Total.withinss = c()
+betweenss = c()
+CH.index = c()
 # 3 clusters
 set.seed(3)
-k=3
-clust3 = kmeans(social_ns, k, nstart=25)
-print("cluster stat::k=3")
-print("size of cluster")
-clust3$size
-print("withinss")
-clust3$withinss
-print("Total withinss")
-clust3$tot.withinss
-print("betweenss")
-clust3$betweenss
-print("CH")
-(clust3$betweenss/clust3$tot.withinss)*((nrow(social_ns)-k)/(k-1))
+i=1
 
-# Visualizing the clusters on a dimensionally reduced plot
-clus3plot = fviz_cluster(clust3, data = social_ns, 
+for (i in 1:5) {
+  k=i+2
+  clust = kmeans(social_ns, k, nstart=25)
+  cluster[i] = i+2
+  withinss[i] = clust$withinss
+  Total.withinss[i] = clust$tot.withinss
+  betweenss[i] = clust$betweenss
+  CH.index[i] = (clust$betweenss/clust$tot.withinss)*((nrow(social_ns)-k)/(k-1))
+  
+  assign(x=paste("clusplot",i+2,sep=""),value = fviz_cluster(clust, data = social_ns, 
              ellipse.type = "euclid", # Concentration ellipse
-             ggtheme = theme_classic(),geom = c("point")
-             )
-# #Initializing kmeans++
-# clust3p = kmeanspp(social_ns, k=k, nstart=50)
-# clus3pplot = fviz_cluster(clust3p, data = social_ns, 
-#              ellipse.type = "euclid", # Concentration ellipse
-#              ggtheme = theme_classic(),geom = c("point")
-#              )
+             ggtheme = theme_classic(),geom = c("point") ))
+         
+}
 
-# 4 clusters
-set.seed(4)
-k=4
-clust4 = kmeans(social_ns, k, nstart=25)
-print("cluster stat::k=4")
-print("size of cluster")
-clust4$size
-print("withinss")
-clust4$withinss
-print("Total withinss")
-clust4$tot.withinss
-print("betweenss")
-clust4$betweenss
-print("CH")
-(clust4$betweenss/clust4$tot.withinss)*((nrow(social_ns)-k)/(k-1))
+grid.arrange(clusplot3,clusplot4,clusplot5,clusplot6, nrow = 2, ncol = 2)
 
-# Visualizing the clusters on a dimensionally reduced plot
-clus4plot = fviz_cluster(clust4, data = social_ns, 
-             ellipse.type = "euclid", # Concentration ellipse
-             ggtheme = theme_classic(),geom = c("point")
-             )
-#Initializing kmeans++
-# clust4p = kmeanspp(social_ns, k=k, nstart=50)
-# print("cluster stat::")
-# print("size of cluster")
-# clust4p$size
-# print("withinss")
-# clust4p$withinss
-# print("Total withinss")
-# clust4p$tot.withinss
-# print("betweenss")
-# clust4p$betweenss
-# print("CH")
-# (clust4p$betweenss/clust4p$tot.withinss)*((nrow(social_ns)-k)/(k-1))
-# 
-# clus3pplot = fviz_cluster(clust4p, data = social_ns, 
-#              ellipse.type = "euclid", # Concentration ellipse
-#              ggtheme = theme_classic(),geom = c("point")
-#              )
-# grid.arrange(clus3plot,clus3pplot,ncol = 2)
-# 
+clustsummary = data.frame(cluster,Total.withinss,betweenss)
+clustsummary
 
-# 5 clusters
-set.seed(3)
-k=5
-clust5 = kmeans(social_ns, k, nstart=25)
-print("cluster stat::k=5")
-print("size of cluster")
-clust5$size
-print("withinss")
-clust5$withinss
-print("Total withinss")
-clust5$tot.withinss
-print("betweenss")
-clust5$betweenss
-print("CH")
-(clust5$betweenss/clust5$tot.withinss)*((nrow(social_ns)-k)/(k-1))
+```
 
-# Visualizing the clusters on a dimensionally reduced plot
-clus5plot = fviz_cluster(clust5, data = social_ns, 
-             ellipse.type = "euclid", # Concentration ellipse
-             ggtheme = theme_classic(),geom = c("point")
-             )
-#Initializing kmeans++
-# clust5p = kmeanspp(social_ns, k=k, nstart=50)
-# clus3pplot = fviz_cluster(clust5p, data = social_ns, 
-#              ellipse.type = "euclid", # Concentration ellipse
-#              ggtheme = theme_classic(),geom = c("point")
-#              )
-# grid.arrange(clus3plot,clus3pplot,ncol = 2)
+Clusters 5 and 6 are convoluted, having 3 and 4 clusters make more sense for our business problem. 
 
-# 6 clusters
-set.seed(3)
-k=6
-clust6 = kmeans(social_ns, k, nstart=25)
-print("cluster stat::")
-print("size of cluster")
-clust6$size
-print("withinss")
-clust6$withinss
-print("Total withinss")
-clust6$tot.withinss
-print("betweenss")
-clust6$betweenss
-print("CH")
-(clust6$betweenss/clust6$tot.withinss)*((nrow(social_ns)-k)/(k-1))
+Let's look at the CH index for clusters 3 to 7.  
 
-# Visualizing the clusters on a dimensionally reduced plot
-clus6plot = fviz_cluster(clust6, data = social_ns, 
-             ellipse.type = "euclid", # Concentration ellipse
-             ggtheme = theme_classic(),geom = c("point")
-             )
+```{r echo=FALSE}
 
-grid.arrange(clus3plot,clus4plot,clus5plot,clus6plot, nrow = 2, ncol = 2)
+set.seed(12)
+#
+# wss <- (nrow(social_ns)-1)*sum(apply(social_ns,2,var))
+k_grid = seq(2, 7, by=1)
+CH_grid = seq(2,7, by=1)
+N = nrow(social_ns)
 
+ for (i in 1:6) {
+  cluster_k = kmeans(social_ns, k_grid[i], nstart=50)
+  W = cluster_k$tot.withinss
+  B = cluster_k$betweenss
+  CH_grid[i] = (B/W)*((N-k_grid[i])/(k_grid[i]-1))
+}
 
+ch_data = data.frame(k_grid, CH_grid)
+
+chp = ggplot(data = ch_data) + 
+  geom_point(mapping = aes(x = ch_data$k_grid, y = ch_data$CH_grid)) +
+  geom_line(mapping = aes(x = ch_data$k_grid, y = ch_data$CH_grid))
+
+grid.arrange(chp, nrow = 1, ncol = 1)
+```
+
+Maximum value of CH index is 3 and there is a drop in CH value if number of clusters is increased. 
+
+From the plot of clusters across PC 1 and 2, cluster 3 values look more distinct in the principal component space.
+
+Let's explore what these principle comonents are actually made of - 
+
+```{r echo=FALSE}
 #perform PCA
 
 pr.out = prcomp(social_ns,scale=TRUE)
-plot(pr.out)
+#plot(pr.out)
 #summary(pr.out)
 
-scores = pr.out$x
-qplot(scores[,1], scores[,2], xlab='Component 1', colour = clust2$cluster, ylab='Component 2')
+# scores = pr.out$x
+# qplot(scores[,1], scores[,2], xlab='Component 1', colour = clust3$cluster, ylab='Component 2')
 
 loadings = pr.out$rotation
 o1 = order(loadings[,1], decreasing=TRUE)
@@ -269,77 +178,95 @@ colnames(social_ns)[head(o2,10)]
 print("PC2 tail")
 colnames(social_ns)[tail(o2,10)]
 
-
 ```
-```{r cluster level summaries}
-library(mosaic)
-library(tidyverse)
+
+```{r warning=FALSE, message=FALSE}
+set.seed(12)
 
 attach(social)
 social_grp2 = social
-social_grp2$influencers = photo_sharing+chatter+sports_fandom+travel+outdoors
-social_grp2$health.enthusiasts= food+cooking+home_and_garden+health_nutrition+personal_fitness+sports_playing
+social_grp2$health.enthusiasts= food+cooking+home_and_garden+health_nutrition+personal_fitness+sports_playing+sports_fandom
 social_grp2$elderly = politics+news+religion+current_events+family+parenting+shopping+business+small_business+eco+automotive
-social_grp2$teens = tv_film+music+online_gaming+beauty+dating+fashion+college_uni+school+art+crafts+computers
-social_grp2$others = spam+uncategorized+adult
+social_grp2$youth = tv_film+music+online_gaming+beauty+dating+fashion+college_uni+school+art+crafts+computers+travel+outdoors+chatter
+social_grp2$othr = spam+uncategorized+adult+photo_sharing
+
+
+cluster_final = kmeans(social_ns, 3, nstart=25)
+
 # append cluster assignment
-mydata <- data.frame(social_grp2, fit$cluster)
+mydata <- data.frame(social_grp2, cluster_final$cluster)
+#View(mydata)
 
-# get cluster means 
-agg = aggregate(social,by=list(clust2$cluster),FUN=mean)
-agg_T = t(agg)
+```
 
-#agg_T %>% mutate(stDev = apply(agg_T,1,sd))
-agg_T
-#plot(agg_T)
-# append cluster assignment
-mydata <- data.frame(social_grp2, fit$cluster)
-mydata <- data.frame(mydata, clust2$cluster)
-#colnames(mydata)
 
-mydata_summ = mydata %>%
-  group_by(clust2.cluster)  %>%  # group the data points by model name
-  summarize(health.enthusiasts.mean = mean(health.enthusiasts),
-            influencers.mean = mean(influencers),
-            elderly.mean = mean(elderly),
-            teens.mean = mean(teens),
-            others.mean = mean(others))  # calculate a mean for #each model
 
-mydata_summ
-# # still not in order...
-# ggplot(mydata_summ, aes(x=cluster, y=health.enthusiasts.mean)) + 
-#   geom_bar(stat='identity') + 
-#   coord_flip()
-# 
-# # reorder the x labels
-# ggplot(mydata_summ, aes(x=reorder(fit.cluster, health.enthusiasts.mean), y=health.enthusiasts.mean)) + 
-#   geom_bar(stat='identity') + 
-#   coord_flip()
+Cluster Profiling:
+
+After looking at the top and bottom of first 2 principal components, we can see there is group of people who are fitness enthisiasts and are tweeting more about health, nutrition, food, cooking etc - Let's call them "Health Enthusiasts"
+
+Similarly, there is another set of people who are more into talking about politics, news, current events, parenting, businesss etc - Let's call them "Elderly"
+
+And finaly, a third set of people who are into fashion, tv, films, music, college and university etc - Let's call them "Youth"
+
+I have created macro categories by clubbing similar categories of tweets based on the identifiction of interest areas for our 3 clusters. For example health enthusiasts have all the health, fitness, food and cooking replated tweets clubbed together and similalry for other categories.
+
+Cataegories such as adult, spam, uncategorized into others and are not considered in creation of these macro categories of tweets.
+
+Let's look at the mean for these mcro categories by cluster - 
+
+```{r echo=FALSE}
+
+summarise_at(group_by(mydata,cluster_final.cluster),vars(health.enthusiasts,elderly,youth),funs(mean(.,na.rm=TRUE)))
+
+```
+Clearly, cluster 1 belongs to the "Health enthusiasts", cluster 3 is the group of "Elderly" and "Youth" is cluster 2.
+
+Density plots shown below shows how the distribution of the points for these macro categories across 3 clusters - 
+
+```{r echo = FALSE}
 
 par(mfrow=c(2,2))
-g = ggplot(mydata, aes(x=elderly))
-g + geom_density(aes(fill=factor(clust2.cluster)))
-
 g = ggplot(mydata, aes(x=health.enthusiasts))
-g + geom_density(aes(fill=factor(clust2.cluster)))
+g + geom_density(aes(fill=factor(cluster_final.cluster)))
 
-g = ggplot(mydata, aes(x=teens))
-g + geom_density(aes(fill=factor(clust2.cluster)))
+g = ggplot(mydata, aes(x=elderly))
+g + geom_density(aes(fill=factor(cluster_final.cluster)))
 
-g = ggplot(mydata, aes(x=others))
-g + geom_density(aes(fill=factor(clust2.cluster)))
-
-
-
-
+g = ggplot(mydata, aes(x=youth))
+g + geom_density(aes(fill=factor(cluster_final.cluster)))
 ```
 
-## Including Plots
 
-You can also embed plots, for example:
+```{r echo= FALSE}
+# library(arules)
+# if(sessionInfo()['basePkgs']=="dplyr" | sessionInfo()['otherPkgs']=="dplyr"){
+#   detach(package:dplyr, unload=TRUE)
+# }
+# library(plyr)
+# 
+# df_groceries <- read.csv("https://raw.githubusercontent.com/jgscott/STA380/master/data/groceries.txt",header = FALSE,sep =',',na.strings = "NA")
+# #View(groceries)
+# dim(df_groceries)
+# 
+# txn = read.transactions(file="https://raw.githubusercontent.com/jgscott/STA380/master/data/groceries.txt", rm.duplicates= TRUE, format="basket",sep=",",cols=1)
+# dim(txn)
+# 
+# 
+# basket_rules <- apriori(txn,parameter = list(sup = 0.011, conf = 0.5,target="rules"))
+# 
+# inspect(basket_rules)
+# 
+# #Alternative to inspect() is to convert rules to a dataframe and then use View()
+# df_basket <- as(basket_rules,"data.frame")
+# #View(df_basket)
+# 
+# library(arulesViz)
+# plot(basket_rules)
+# plot(basket_rules, method = "grouped", control = list(k = 5))
+# plot(basket_rules, method="graph", control=list(type="items"),cex=0.7)
+# #plot(basket_rules, method="paracoord",  control=list(alpha=.5, reorder=TRUE))
+# plot(basket_rules,measure=c("support","lift"),shading="confidence",engibe='interactive')
+# # itemFrequencyPlot(txn, topN = 5)
 
-```{r pressure, echo=FALSE}
-plot(pressure)
 ```
-
-Note that the `echo = FALSE` parameter was added to the code chunk to prevent printing of the R code that generated the plot.
