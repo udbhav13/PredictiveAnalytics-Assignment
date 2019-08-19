@@ -1,0 +1,1065 @@
+---
+title: "STA Assignment"
+output: github_document
+authors:
+- Kumar Udbhav 
+- Vikrant Vaidya 
+- Shivank Sood 
+- Neha
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+## Q1 Visual story telling part 1: green buildings
+
+
+```{r include=FALSE}
+library(tidyverse)
+library(ggplot2)
+#setwd("C:\\Users\\shiva\\Documents\\James Scott - Predictive #R\\STA380-master\\STA380-master\\data")
+g_build = read.csv("https://raw.githubusercontent.com/jgscott/STA380/master/data/greenbuildings.csv")
+head(g_build)
+dim(g_build)
+
+
+
+g_build$cluster= as.factor(g_build$cluster)
+g_build$green_rating = as.factor(g_build$green_rating)
+g_build$CS_PropertyID = as.factor(g_build$CS_PropertyID)
+g_build$amenities= as.factor(g_build$amenities)
+g_build$net = as.factor(g_build$net)
+g_build$class_a = as.factor(g_build$class_a)
+g_build$class_b = as.factor(g_build$class_b)
+g_build$renovated = as.factor(g_build$renovated)
+g_build$LEED = as.factor(g_build$LEED)
+g_build$Energystar = as.factor(g_build$Energystar)
+
+```
+I disagree with the on-staff stats guru on some points mentioned below:  
+Which Cluster is the location in:  
+The excel guru looks at the rent of the whole market and fails to consider cluster in the whole economic calculation. Each cluster has a different rent spectrum. Moreover, the green building in each cluster has a different trend of market rate as compared to the non-green buildings in the same cluster. In some clusters, green buildings are less expensive than the others and in others the difference is very different from others. So $2.6 more per squarefoot is a vague estimate. It can easily be more or less depending on the cluster.
+```{r echo=FALSE}
+Clusters = g_build %>% group_by(green_rating,cluster) %>% summarise(med_rent = median(Rent))
+ggplot(Clusters, aes(x=reorder(cluster,med_rent), y=med_rent, color = green_rating)) + geom_point()+
+  scale_y_log10()+labs(title="Plot of cluster-wise green and non-green property rents",x ="Clusters", y = "Rent",color="Green Building")+
+   theme(axis.text.x=element_blank())
+```
+Can we assume minimum occupancy rate of 90%?  
+Half of the properties have below 90% occupancy rate. Though green properties are more occupied than non-green but still 90% is a very large assumption on part of the stats-guru. Moreover, some clusters don't have that much occupancy, which can mean that there is not much demand in those clusters ruling out the idea of investing in those clusters. 
+```{r echo=FALSE}
+summary(g_build$leasing_rate)
+ggplot(g_build, aes(x=green_rating, y=leasing_rate)) + geom_boxplot() 
+avg_lr  = g_build %>% group_by(cluster,green_rating) %>% summarise(avg_lr = mean(leasing_rate)) %>% arrange(desc(avg_lr))
+ggplot(avg_lr, aes(x=reorder(cluster,avg_lr), y=avg_lr,color=green_rating)) + geom_point() + geom_hline(yintercept = 90)+
+  labs(title="Plot of cluster-wise green and non-green building occupancy",x ="Clusters", y = "Average Occupancy", color="Green Building")+
+   theme(axis.text.x=element_blank())
+```
+Who pays the utility bills?  
+The stats-guru does not take into account whether the utility bills are paid by renter or not. Rents are obviously higher for utility cost included in rent. There seem to be both green and non-green buildings in the two categories. We need to account for utility charges if either case is there.
+```{r echo=FALSE}
+ggplot(g_build, aes(x=net, y=Rent, colour = green_rating)) + geom_boxplot() +scale_y_log10()+
+  labs(title="Boxplot for Variation of rent with Utility cost contract ",x ="Utility Cost status", y = "Rent",color="Green Building")
+
+```
+Electricity cost and Gas costs  
+Both Electricity and Gas costs are different for different clusters. 
+```{r echo=FALSE}
+Electricity = g_build %>% group_by(cluster) %>% summarise(avg = mean(Electricity_Costs))
+ggplot(Electricity, aes(x=reorder(cluster,avg), y=avg)) + geom_point()+
+  labs(title="Cluster-wise Electricity Costs",x ="Clusters", y = "Electricity Costs")+
+   theme(axis.text.x=element_blank())
+```
+
+```{r echo=FALSE}
+Gas = g_build %>% group_by(cluster) %>% summarise(avg = mean(Gas_Costs))
+ggplot(Gas, aes(x=reorder(cluster,avg), y=avg)) + geom_point()+
+  labs(title="Cluster-wise Gas Costs",x ="Clusters", y = "Gas Costs") +
+   theme(axis.text.x=element_blank())
+```
+Do all clusters have equally tall buildings?  
+Each cluster has a different range of stories of a building. As a trend, green buildings are usually taller cluster-wise. The trend in the story reflects the demand in the area and there also might be additional legal restrictions in some areas as well.
+```{r echo=FALSE}
+stor = g_build %>% group_by(cluster,green_rating) %>% summarise(strs = median(stories))
+ggplot(stor, aes(x=reorder(cluster,strs), y=strs,color = green_rating)) + geom_point() + geom_hline(yintercept = 15)+
+  labs(title="Cluster-wise Stories distribution",x ="Clusters", y = "Median Stories",color="Green Building")+
+   theme(axis.text.x=element_blank())
+```
+CONCLUSION  
+-The recommendation put forward by the stats guru seems pretty vague and incomplete. He fails to consider factors which might have an economic impact both positively and negatively.   
+-He did not consider the cluster-wise distribution of rents and then the difference of green and non-green property's rent.      
+-His assumption of atleast 90% occupancy seems vague.    
+-He does not account utility costs nor does he consider whether it is included in the rent or not.    
+-All clusters do not have high sky scrapers. One hypothesis is that it can indicate demand or legal restrictions.  
+
+```{r include=FALSE}
+#IMPORTING LIBRARIES
+
+library(mosaic)
+library(quantmod)
+library(foreach)
+library(dplyr)
+library(gridExtra)
+
+```
+#Q2 VISUAL STROY TELLING - FLIGHTS AT ABIA
+
+We are going to take a look at the ABIA data from the eyes and interest of a frequent flyer staying in Austin.
+As a frequent flyer I would want to know -
+
+1) What percentage of flights in and out of Austin are delayed ?
+2) What is the average amount of times by which flights in and out of Austin get delayed?
+3) What are the Origin(flights to Austin) and Destination(flights from Austin) with the most cancellation blues?
+4) What causes these cancellations ?
+5) What are the airline carriers one should expect most delays with?
+6) Which are the best Origin/Dest to expect pre-time arrival/departures to/from Austin ?
+7) Which airports do I expect to spend the maximum time Taxing In and Out?
+8) What are the times of the day I should expect the maximum arrival and departure delays in/out of Austin?
+9) Are these trends better/worse on some days of the week? Whether I could beat this?
+
+But first, PIPING GROUPING AND SUMMARISING the data.
+```{r echo=FALSE,warning=FALSE}
+
+abia = read.csv('https://raw.githubusercontent.com/jgscott/STA380/master/data/ABIA.csv')
+
+#Creating Flag Columns
+abia <- abia %>% 
+  mutate(arr_delay_flag = ifelse(abia$ArrDelay>0,1,0))
+
+abia <- abia %>% 
+  mutate(dep_delay_flag = ifelse(abia$DepDelay>0,1,0))
+
+abia$Period_dep[(abia$DepTime >= 500) & (abia$DepTime < 1200)] <- "MORNING"
+abia$Period_dep[(abia$DepTime >= 1200) & (abia$DepTime < 1800)] <- "AFTERNOON"
+abia$Period_dep[(abia$DepTime >= 1800) | (abia$DepTime < 500)] <- "EVENING"
+
+abia$Period_arr[(abia$ArrTime >= 500) & (abia$ArrTime < 1200)] <- "MORNING"
+abia$Period_arr[(abia$ArrTime >= 1200) & (abia$ArrTime < 1800)] <- "AFTERNOON"
+abia$Period_arr[(abia$ArrTime >= 1800) | (abia$ArrTime < 500)] <- "EVENING"
+
+#% of DEPARTURES
+#Grouping Delays by levels and Plotting
+#BY MONTH
+depdel_month = abia[(!is.na(abia$dep_delay_flag) & (abia$Origin=="AUS")),] %>%
+  group_by(Month) %>%
+  summarise(depdel.prt = (sum(dep_delay_flag)/count(Month))*100)
+
+#BY DAY OF MONTH
+depdel_dom = abia[(!is.na(abia$dep_delay_flag) & (abia$Origin=="AUS")),] %>%
+  group_by(DayofMonth) %>%
+  summarize(depdel.prt=(sum(dep_delay_flag)/count(DayofMonth))*100)
+
+
+#BY DAY OF WEEK
+depdel_dow = abia[(!is.na(abia$dep_delay_flag) & (abia$Origin=="AUS")),] %>%
+  group_by(DayOfWeek) %>%
+  summarize(depdel.prt=(sum(dep_delay_flag)/count(DayOfWeek))*100)
+
+
+#% of ARRIVALS
+#Grouping Delays by levels and Plotting
+#BY MONTH
+arrdel_month = abia[(!is.na(abia$arr_delay_flag) & (abia$Dest=="AUS")),] %>%
+  group_by(Month) %>%
+  summarize(arrdel.prt=(sum(arr_delay_flag)/count(Month))*100)
+
+#BY DAY OF MONTH
+arrdel_dom = abia[(!is.na(abia$arr_delay_flag) & (abia$Dest=="AUS")),] %>%
+  group_by(DayofMonth) %>%
+  summarize(arrdel.prt=(sum(arr_delay_flag)/count(DayofMonth))*100)
+
+#BY DAY OF WEEK
+arrdel_dow = abia[(!is.na(abia$arr_delay_flag) & (abia$Dest=="AUS")),] %>%
+  group_by(DayOfWeek) %>%
+  summarize(arrdel.prt=(sum(arr_delay_flag)/count(DayOfWeek))*100)
+
+
+
+#2 - Plotting Avg Dep and Arrival Delays by Month/DayofMonth/DayofWeek
+#Can get rid of flag use
+#DEP DELAYS
+mean_depdel_month = abia[((abia$dep_delay_flag==1)& (abia$Origin=="AUS")),] %>%
+  group_by(Month) %>%
+  summarise(mean.del = mean(DepDelay))
+
+mean_depdel_dom = abia[((abia$dep_delay_flag==1)& (abia$Origin=="AUS")),] %>%
+  group_by(DayofMonth) %>%
+  summarise(mean.del = mean(DepDelay))
+
+mean_depdel_dow = abia[((abia$dep_delay_flag==1)& (abia$Origin=="AUS")),] %>%
+  group_by(DayOfWeek) %>%
+  summarise(mean.del = mean(DepDelay))
+
+#ARR DELAYS
+mean_arrdel_month = abia[((abia$arr_delay_flag==1) & (abia$Dest=="AUS")),] %>%
+  group_by(Month) %>%
+  summarise(mean.del = mean(ArrDelay))
+
+mean_arrdel_dom = abia[((abia$arr_delay_flag==1) & (abia$Dest=="AUS")),] %>%
+  group_by(DayofMonth) %>%
+  summarise(mean.del = mean(ArrDelay))
+
+mean_arrdel_dow = abia[((abia$arr_delay_flag==1) & (abia$Dest=="AUS")),] %>%
+  group_by(DayOfWeek) %>%
+  summarise(mean.del = mean(ArrDelay))
+
+
+#3 Cancelled Flights by Origin and Destination/Cancellation Code
+orig_cancel = abia[((abia$Cancelled==1) & (abia$Dest=="AUS")),] %>%
+  group_by(Origin,CancellationCode) %>%
+  summarise(tot.cancel = sum(Cancelled))
+
+dest_cancel = abia[((abia$Cancelled==1) & (abia$Origin=="AUS")),] %>%
+  group_by(Dest,CancellationCode) %>%
+  summarise(tot.cancel = sum(Cancelled))
+
+
+#4 Unique Carrier with Carrier Delay
+carrier_del = abia[abia$CarrierDelay>=0,] %>%
+  group_by(UniqueCarrier) %>%
+  summarise(mean.del = mean(CarrierDelay))
+
+#5 Pre-time departures to Austin And Pre-time arrivals from Austin
+pre_dep = abia[((!(abia$Origin=="AUS")) & (abia$DepDelay<0) & (!is.na(abia$DepDelay))),] %>%
+  group_by(Origin) %>%
+  summarise(cnt.dep = n() )
+
+pre_arr = abia[((!(abia$Dest=="AUS")) & (abia$ArrDelay<0) & (!is.na(abia$ArrDelay))),] %>%
+  group_by(Dest) %>%
+  summarise(cnt.arr = n() )
+
+#6 Mean Taxi-Out/In times by airport
+taxi_out = abia[!is.na(abia$TaxiOut),] %>%
+  group_by(Origin) %>%
+  summarise(mean = mean(TaxiOut))
+
+taxi_in = abia[!is.na(abia$TaxiIn),] %>%
+  group_by(Dest) %>%
+  summarise(mean = mean(TaxiIn))
+
+#7 Delays by Time Period for both arrivals and departures - AUS
+
+period_dep_del = abia[((!is.na(abia$DepDelay))&(abia$Origin=="AUS")),] %>%
+  group_by(Period_dep) %>%
+  summarise(mean.del = mean(DepDelay))
+
+period_arr_del = abia[((!is.na(abia$ArrDelay))&(abia$Dest=="AUS")),] %>%
+  group_by(Period_arr) %>%
+  summarise(mean.del = mean(ArrDelay))
+
+## By DOW Level
+
+period_dep_del_dow = abia[((!is.na(abia$DepDelay))&(abia$Origin=="AUS")),] %>%
+  group_by(DayOfWeek,Period_dep) %>%
+  summarise(mean.del = mean(DepDelay))
+
+period_arr_del_dow = abia[((!is.na(abia$ArrDelay))&(abia$Dest=="AUS")),] %>%
+  group_by(DayOfWeek,Period_arr) %>%
+  summarise(mean.del = mean(ArrDelay))
+```
+
+1) What percentage of flights in and out of Austin are delayed ?
+
+DEPARTURES
+```{r echo=FALSE}
+# BY MONTH
+ggplot(depdel_month) + 
+  geom_line(aes(x=Month, y=depdel.prt), color='blue') + 
+  theme_bw(base_size=15) +
+  scale_x_continuous(breaks = 1:12) +
+  labs(title="% Departure Delays from Austin", 
+       caption="Source: ABIA dataset 2008",
+       y="Flight Delay %",
+       x = "Month")
+
+```
+
+```{r echo=FALSE,warning=FALSE}
+# BY DAY OF MONTH
+ggplot(depdel_dom) + 
+  geom_line(aes(x=DayofMonth, y=depdel.prt), color='blue') + 
+  theme_bw(base_size=15) +
+  scale_x_continuous(breaks = 1:31) +
+  labs(title="% Departure Delays from Austin - Day of Month", 
+       caption="Source: ABIA dataset 2008",
+       y="Flight Delay %",
+       x = "Day of Month") +
+  theme(axis.text.x = element_text(angle=90, vjust=0.6))
+```
+
+```{r echo=FALSE,warning=FALSE}
+# BY DAY OF WEEK
+ggplot(depdel_dow) + 
+  geom_line(aes(x=DayOfWeek, y=depdel.prt), color='blue') + 
+  theme_bw(base_size=15) +
+  scale_x_continuous(breaks = 1:7) +
+  labs(title="% Departure Delays from Austin - Day of Week", 
+       caption="Source: ABIA dataset 2008",
+       y="Flight Delay %",
+       x = "Day of Week")
+```
+
+
+ARRIVALS
+```{r echo=FALSE,warning=FALSE}
+#BY MONTH
+ggplot(arrdel_month) + 
+  geom_line(aes(x=Month, y=arrdel.prt), color='red') + 
+  theme_bw(base_size=15) +
+  scale_x_continuous(breaks = 1:12) +
+  labs(title="% Arrival Delays from Austin", 
+       caption="Source: ABIA dataset 2008",
+       y="Flight Delay %",
+       x = "Month")
+```
+
+```{r echo=FALSE}
+# BY DAY OF MONTH
+ggplot(arrdel_dom) + 
+  geom_line(aes(x=DayofMonth, y=arrdel.prt), color='red') + 
+  theme_bw(base_size=15) +
+  scale_x_continuous(breaks = 1:31) +
+  labs(title="% Arrival Delays from Austin - Day of Month", 
+       caption="Source: ABIA dataset 2008",
+       y="Flight Delay %",
+       x = "Day of Month") +
+  theme(axis.text.x = element_text(angle=90, vjust=0.6))
+```
+
+```{r echo=FALSE,warning=FALSE}
+# BY DAY OF WEEK
+ggplot(arrdel_dow) + 
+  geom_line(aes(x=DayOfWeek, y=arrdel.prt), color='red') + 
+  theme_bw(base_size=15) +
+  scale_x_continuous(breaks = 1:7) +
+  labs(title="% Departure Delays from Austin - Day of Week", 
+       caption="Source: ABIA dataset 2008",
+       y="Flight Delay %",
+       x = "Day of Week")
+```
+
+2) What is the average amount of times by which flights in and out of Austin get delayed?
+
+```{r echo=FALSE,warning=FALSE}
+#BY MONTH
+p1 = ggplot(mean_depdel_month) + 
+  geom_line(aes(x=Month, y=mean.del), color='blue') + 
+  theme_bw(base_size=10) +
+  scale_x_continuous(breaks = 1:12) +
+  labs(title="Mean Departure Delays from Austin", 
+       caption="Source: ABIA dataset 2008",
+       y="Flight Delay Mean (mins)",
+       x = "Month")
+
+p2 = ggplot(mean_arrdel_month) + 
+  geom_line(aes(x=Month, y=mean.del), color='red') + 
+  theme_bw(base_size=10) +
+  scale_x_continuous(breaks = 1:12) +
+  labs(title="Mean Departure Delays from Austin", 
+       caption="Source: ABIA dataset 2008",
+       y="Flight Delay Mean (mins)",
+       x = "Month")
+
+grid.arrange(p1,p2, nrow=1)
+
+```
+
+```{r echo=FALSE,warning=FALSE}
+# BY DAY OF MONTH
+p1 = ggplot(mean_depdel_dom) + 
+  geom_line(aes(x=DayofMonth, y=mean.del), color='blue') + 
+  theme_bw(base_size=10) +
+  scale_x_continuous(breaks = 1:31) +
+  labs(title="Mean Departure Delays from Austin", 
+       caption="Source: ABIA dataset 2008",
+       y="Flight Delay Mean (mins)",
+       x = "Day of Month") +
+  theme(axis.text.x = element_text(angle=90, vjust=0.6))
+
+p2 = ggplot(mean_arrdel_dom) + 
+  geom_line(aes(x=DayofMonth, y=mean.del), color='red') + 
+  theme_bw(base_size=10) +
+  scale_x_continuous(breaks = 1:31) +
+  labs(title="Mean Arrival Delays from Austin", 
+       caption="Source: ABIA dataset 2008",
+       y="Flight Delay Mean (mins)",
+       x = "Day of Month") +
+  theme(axis.text.x = element_text(angle=90, vjust=0.6))
+
+grid.arrange(p1,p2, nrow=1)
+```
+
+```{r echo=FALSE,warning=FALSE}
+# BY DAY OF WEEK
+p1 = ggplot(mean_depdel_dow) + 
+  geom_line(aes(x=DayOfWeek, y=mean.del), color='blue') + 
+  theme_bw(base_size=10) +
+  scale_x_continuous(breaks = 1:31) +
+  labs(title="Mean Departure Delays from Austin", 
+       caption="Source: ABIA dataset 2008",
+       y="Flight Delay Mean (mins)",
+       x = "Day of Week") 
+
+
+p2 = ggplot(mean_arrdel_dow) + 
+  geom_line(aes(x=DayOfWeek, y=mean.del), color='red') + 
+  theme_bw(base_size=10) +
+  scale_x_continuous(breaks = 1:31) +
+  labs(title="Mean Arrival Delays from Austin", 
+       caption="Source: ABIA dataset 2008",
+       y="Flight Delay Mean (mins)",
+       x = "Day of Week") 
+
+
+grid.arrange(p1,p2, nrow=1)
+```
+
+3) What are the Origin(flights to Austin) and Destination(flights from Austin) with the most cancellation blues?
+4) How are these split by the Cancellation Codes?
+```{r echo=FALSE,warning=FALSE}
+# BY ORIGIN
+ggplot(orig_cancel, aes(x=Origin, y=tot.cancel)) + 
+  geom_bar(stat='identity') +
+  facet_wrap(~ CancellationCode, nrow = 3) +
+  labs(title="Most Cancellations From ?", 
+       caption="Source: ABIA dataset 2008",
+       y="Total FLights Cancelled",
+       x = "Origin Airport") +
+  theme(axis.text.x = element_text(angle=90, vjust=0.6))
+```
+```{r echo=FALSE}
+
+# BY DESTINATION
+ggplot(dest_cancel, aes(x=Dest, y=tot.cancel)) + 
+  geom_bar(stat='identity') +
+  facet_wrap(~ CancellationCode, nrow = 3) +
+  labs(title="Most Cancellations To ?", 
+       caption="Source: ABIA dataset 2008",
+       y="Total FLights Cancelled",
+       x = "Destination Airport") +
+  theme(axis.text.x = element_text(angle=90, vjust=0.6))
+```
+
+5) What are the airline carriers one should expect most delays with?
+
+```{r echo=FALSE,warning=FALSE}
+# CARRIER DELAYS
+ggplot(na.omit(carrier_del), aes(x=UniqueCarrier, y=mean.del)) + 
+  geom_bar(stat='identity') +
+  labs(title="Which airline carriers to avoid?", 
+       caption="Source: ABIA dataset 2008",
+       y="Mean Delay Time",
+       x = "Airline Carrier") +
+  theme(axis.text.x = element_text(angle=90, vjust=0.6))
+```
+
+6) Which are the best Origin/Dest to expect pre-time arrival/departures to/from Austin ?
+
+```{r echo=FALSE,warning=FALSE}
+p1 = ggplot(pre_dep, aes(x=Origin , y=cnt.dep)) + 
+  geom_bar(stat='identity') +
+  labs(title="BEST airports to fly FROM, to Austin?", 
+       caption="Source: ABIA dataset 2008",
+       y="Total Pre Time Departures",
+       x = "Airport") +
+  theme(axis.text.x = element_text(angle=90, vjust=0.6))
+
+p2 = ggplot(pre_arr, aes(x=Dest , y=cnt.arr)) + 
+  geom_bar(stat='identity') +
+  labs(title="BEST airports to fly TO, from Austin?", 
+       caption="Source: ABIA dataset 2008",
+       y="Total Pre Time Arrivals",
+       x = "Airport") +
+  theme(axis.text.x = element_text(angle=90, vjust=0.6))
+
+grid.arrange(p1,p2, nrow=2)
+```
+
+7) Which airports do I expect to spend the maximum time Taxing In and Out?
+```{r echo=FALSE,warning=FALSE}
+p1 = ggplot(taxi_out, aes(x=Origin , y=mean)) + 
+  geom_bar(stat='identity') +
+  labs(title="Average Taxi Out times", 
+       caption="Source: ABIA dataset 2008",
+       y="Average time (mins)",
+       x = "Airport") +
+  theme(axis.text.x = element_text(angle=90, vjust=0.6))
+
+p2 = ggplot(taxi_in, aes(x=Dest , y=mean)) + 
+  geom_bar(stat='identity') +
+  labs(title="Average Taxi In times", 
+       caption="Source: ABIA dataset 2008",
+       y="Average time (mins)",
+       x = "Airport") +
+  theme(axis.text.x = element_text(angle=90, vjust=0.6))
+
+grid.arrange(p1,p2, nrow=2)
+```
+
+8) What are the times of the day I should expect the maximum arrival and departure delays in/out of Austin?
+```{r echo=FALSE,warning=FALSE}
+p1 = ggplot(period_dep_del, aes(x=Period_dep , y=mean.del)) + 
+  geom_bar(stat='identity') +
+  labs(title="Best time to fly out of Austin?", 
+       caption="Source: ABIA dataset 2008",
+       y="Average Dep Delay",
+       x = "Time Of Day") 
+
+p2 = ggplot(period_arr_del, aes(x=Period_arr , y=mean.del)) + 
+  geom_bar(stat='identity') +
+  labs(title="Best time to fly into Austin?", 
+       caption="Source: ABIA dataset 2008",
+       y="Average Arrival Delay",
+       x = "Time Of Day") 
+
+grid.arrange(p1,p2, nrow=1)
+```
+
+9) Are these trends better/worse on some days of the week? Whether I could beat this?
+```{r echo=FALSE,warning=FALSE}
+ggplot(period_dep_del_dow, aes(x=DayOfWeek, y=mean.del)) + 
+  geom_bar(stat='identity') +
+  facet_wrap(~ Period_dep, nrow = 7) +
+  labs(title="Best time to fly out of Austin?", 
+       caption="Source: ABIA dataset 2008",
+       y="Average Dep Delay",
+       x = "Day of Week") +
+  theme(axis.text.x = element_text(angle=90, vjust=0.6))
+```
+
+```{r echo=FALSE,warning=FALSE}
+ggplot(period_arr_del_dow, aes(x=DayOfWeek, y=mean.del)) + 
+  geom_bar(stat='identity') +
+  facet_wrap(~ Period_arr, nrow = 7) +
+  labs(title="Best time to fly into Austin?", 
+       caption="Source: ABIA dataset 2008",
+       y="Average Arr Delay",
+       x = "Day of Week") +
+  theme(axis.text.x = element_text(angle=90, vjust=0.6))
+```
+
+
+#Q3 PORTFOLIO MODELLING
+
+PORTFOLIO 1.
+My Portfolio 1 consists of EFT's that have more of a global outlook like.
+
+1. VT - global reach ETF
+2. ACWX - has a global reach minus the United States
+3. FXI - China focussed ETF
+```{r echo=FALSE,warning=FALSE,message=FALSE}
+#PORTFOLIO 1
+mystocks = c("VT", "ACWX", "FXI")
+myprices = getSymbols(mystocks, from = "2014-01-01")
+
+#Adjusting for splits and dividends
+for(ticker in mystocks) {
+  expr = paste0(ticker, "a = adjustOHLC(", ticker, ")")
+  eval(parse(text=expr))
+}
+
+#Combining all returns in a matrix
+all_returns = cbind(ClCl(ACWXa),ClCl(FXIa),ClCl(VTa))
+all_returns = as.matrix(na.omit(all_returns))
+
+
+#Simulating different possible scenarios by bootstrap for PORTFOLIO 1
+
+initial_wealth = 100000
+sim1= foreach(i=1:5000, .combine='rbind') %do% {
+  total_wealth = initial_wealth
+  weights = c(0.33, 0.33, 0.33) #
+  holdings = weights * total_wealth
+  n_days = 20
+  wealthtracker = rep(0, n_days)
+  for(today in 1:n_days) {
+    return.today = resample(all_returns, 1, orig.ids=FALSE)
+    holdings = holdings + holdings*return.today
+    total_wealth = sum(holdings)
+    wealthtracker[today] = total_wealth
+  }
+  wealthtracker
+}
+
+# VAR Calculation
+var = quantile(wealthtracker,c(0.05))
+cat("The VAR for this portfolio is ", var)
+```
+
+PORTFOLIO 2.
+My portfolio 2 is a safe retirement centric ETF portfolio. Long time hold with guaranteed yields.
+
+1) VYM - retirement centric high dividend yield
+2) VGLT - safe ETF with returns on long term
+3) BOND - 3.4% safe yield return
+4) PGX - 5.7% safe dividend returns, risk averse
+```{r echo=FALSE,warning=FALSE}
+#PORTFOLIO 2
+mystocks2 = c("VYM", "VGLT", "BOND" , "PGX")
+myprices2 = getSymbols(mystocks2, from = "2014-01-01")
+
+#Adjusting for splits and dividends
+for(ticker in mystocks2) {
+  expr = paste0(ticker, "a = adjustOHLC(", ticker, ")")
+  eval(parse(text=expr))
+}
+
+#Combining all returns in a matrix
+all_returns2 = cbind(ClCl(VYMa),ClCl(VGLTa),ClCl(BONDa),ClCl(PGXa))
+all_returns2 = as.matrix(na.omit(all_returns2))
+
+
+#Simulating different possible scenarios by bootstrap for PORTFOLIO 2
+
+initial_wealth = 100000
+sim2= foreach(i=1:5000, .combine='rbind') %do% {
+  total_wealth = initial_wealth
+  weights = c(0.25, 0.25, 0.25, 0.25) #
+  holdings = weights * total_wealth
+  n_days = 20
+  wealthtracker = rep(0, n_days)
+  for(today in 1:n_days) {
+    return.today = resample(all_returns2, 1, orig.ids=FALSE)
+    holdings = holdings + holdings*return.today
+    total_wealth = sum(holdings)
+    wealthtracker[today] = total_wealth
+  }
+  wealthtracker
+}
+
+#CALCULATING VAR
+var = quantile(wealthtracker,c(0.05))
+cat("The VAR for this portfolio is ", var)
+```
+
+
+PORTFOLIO 3.
+My portfolio 3 is a diverse mix porfolio. High risk centric but higher returns on success too.
+
+1) VGT - is a tech based ETF with some shares on Amazon too
+2) XLY - is a big $12 Billion consumer fund
+3) XBI - is a high risk ETF with money in a lot of medical startups
+4) VNQ - is a real estate based ETF
+```{r echo=FALSE,warning=FALSE}
+#PORTFOLIO 3
+mystocks3 = c("VGT", "XLY", "XBI" , "VNQ")
+myprices3 = getSymbols(mystocks3, from = "2014-01-01")
+
+#Adjusting for splits and dividends
+for(ticker in mystocks3) {
+  expr = paste0(ticker, "a = adjustOHLC(", ticker, ")")
+  eval(parse(text=expr))
+}
+
+#Combining all returns in a matrix
+all_returns3 = cbind(ClCl(VGTa),ClCl(XLYa),ClCl(XBIa),ClCl(VNQa))
+all_returns3 = as.matrix(na.omit(all_returns3))
+
+
+#Simulating different possible scenarios by bootstrap for PORTFOLIO 2
+
+initial_wealth = 100000
+sim3= foreach(i=1:5000, .combine='rbind') %do% {
+  total_wealth = initial_wealth
+  weights = c(0.25, 0.25, 0.25, 0.25) #
+  holdings = weights * total_wealth
+  n_days = 20
+  wealthtracker = rep(0, n_days)
+  for(today in 1:n_days) {
+    return.today = resample(all_returns3, 1, orig.ids=FALSE)
+    holdings = holdings + holdings*return.today
+    total_wealth = sum(holdings)
+    wealthtracker[today] = total_wealth
+  }
+  wealthtracker
+}
+
+#CALCULATING VAR
+var = quantile(wealthtracker,c(0.05))
+cat("The VAR for this portfolio is ", var)
+```
+
+
+
+## Q5 Market segmentation
+
+Consider the data in social_marketing.csv. This was data collected in the course of a market-research study using followers of the Twitter account of a large consumer brand that shall remain nameless---let's call it "NutrientH20" just to have a label. The goal here was for NutrientH20 to understand its social-media audience a little bit better, so that it could hone its messaging a little more sharply.
+
+A bit of background on the data collection: the advertising firm who runs NutrientH20's online-advertising campaigns took a sample of the brand's Twitter followers. They collected every Twitter post ("tweet") by each of those followers over a seven-day period in June 2014. Every post was examined by a human annotator contracted through Amazon's Mechanical Turk service. Each tweet was categorized based on its content using a pre-specified scheme of 36 different categories, each representing a broad area of interest (e.g. politics, sports, family, etc.) Annotators were allowed to classify a post as belonging to more than one category. For example, a hypothetical post such as "I'm really excited to see grandpa go wreck shop in his geriatic soccer league this Sunday!" might be categorized as both "family" and "sports." You get the picture.
+
+Each row of social_marketing.csv represents one user, labeled by a random (anonymous, unique) 9-digit alphanumeric code. Each column represents an interest, which are labeled along the top of the data file. The entries are the number of posts by a given user that fell into the given category. Two interests of note here are "spam" (i.e. unsolicited advertising) and "adult" (posts that are pornographic, salacious, or explicitly sexual). There are a lot of spam and pornography "bots" on Twitter; while these have been filtered out of the data set to some extent, there will certainly be some that slip through. There's also an "uncategorized" label. Annotators were told to use this sparingly, but it's there to capture posts that don't fit at all into any of the listed interest categories. (A lot of annotators may used the "chatter" category for this as well.) Keep in mind as you examine the data that you cannot expect perfect annotations of all posts. Some annotators might have simply been asleep at the wheel some, or even all, of the time! Thus there is some inevitable error and noisiness in the annotation process.
+
+Your task to is analyze this data as you see fit, and to prepare a concise report for NutrientH20 that identifies any interesting market segments that appear to stand out in their social-media audience. You have complete freedom in deciding how to pre-process the data and how to define "market segment." (Is it a group of correlated interests? A cluster? A latent factor? Etc.) Just use the data to come up with some interesting, well-supported insights about the audience, and be clear about what you did.
+
+## Analysis:
+Step 1: Data loading and exploration
+
+You can include R code in the document as follows:
+
+```{r  echo = FALSE, message=FALSE, warning=FALSE}
+library(ggplot2)
+library(tidyverse)  # data manipulation
+library(cluster)    # clustering algorithms
+library(factoextra)
+library(NbClust)
+library(corrplot)
+library(gridExtra)
+library(ggcorrplot)
+library(mosaic)
+library(foreach)
+
+
+social = read.csv("https://raw.githubusercontent.com/jgscott/STA380/master/data/social_marketing.csv",row.names="X")
+#dim(social)
+
+social = na.omit(social)
+social_s = scale(social,center=TRUE, scale=TRUE)
+social_n = social/rowSums(social)
+social_ns = scale(social_n,center=TRUE, scale=TRUE)
+summary(social_ns)
+cormat <- cor(social_ns)
+all.plot = corrplot(cormat,method = 'shade',type = 'lower')
+
+cormat.topleft <- round(cor(social_ns[,1:18]),2)
+cormat.bottomright <- round(cor(social_ns[,19:36]),2)
+
+topleft = corrplot(cormat.topleft,method = 'shade',type = 'lower')
+bottomright = corrplot(cormat.bottomright,method = 'shade',type = 'lower')
+
+```
+Few insights - 
+  * Categories like fashion, beauty, dating etc are correlated, similarly for .
+  * Categories like spam, adult are also correlated
+  
+  * Categories such as spam, adult have high range but the values till 3rd quartile are very low. For example in spam, 3rd quartile is -0.067 and maximum value is 32
+
+To decide how many clusters exist in our data, let's look at Elbow and Silhouette plots to explore further.
+
+```{r  echo = FALSE, message=FALSE, warning=FALSE}
+# Elbow method
+wss = fviz_nbclust(social_ns, kmeans, method = "wss") +
+  labs(subtitle = "Elbow method")
+
+# Silhouette method
+sil = fviz_nbclust(social_ns, kmeans, method = "silhouette")+
+  labs(subtitle = "Silhouette method")
+
+grid.arrange(wss,sil, nrow = 1, ncol = 2)
+
+```
+
+There is no elbow formation in the elbow plot. The silhouette plot is also not able to decide upon a rational number of clusters for the segment. 10 clusters in the data is too high to design a targeted marketing strategy for the custome segments.
+
+Let's explore how 3,4,5 and 6 clusters look like. 
+
+```{r  echo = FALSE, message=FALSE, warning=FALSE}
+library(LICORS)
+
+# K-Means Clustering with 3 clusters
+set.seed(12)
+#size=c()
+cluster = c()
+withinss = c()
+Total.withinss = c()
+betweenss = c()
+CH.index = c()
+# 3 clusters
+set.seed(3)
+i=1
+
+for (i in 1:5) {
+  k=i+2
+  clust = kmeans(social_ns, k, nstart=25)
+  cluster[i] = i+2
+  withinss[i] = clust$withinss
+  Total.withinss[i] = clust$tot.withinss
+  betweenss[i] = clust$betweenss
+  CH.index[i] = (clust$betweenss/clust$tot.withinss)*((nrow(social_ns)-k)/(k-1))
+  
+  assign(x=paste("clusplot",i+2,sep=""),value = fviz_cluster(clust, data = social_ns, 
+             ellipse.type = "euclid", # Concentration ellipse
+             ggtheme = theme_classic(),geom = c("point") ))
+         
+}
+
+grid.arrange(clusplot3,clusplot4,clusplot5,clusplot6, nrow = 2, ncol = 2)
+
+clustsummary = data.frame(cluster,Total.withinss,betweenss)
+clustsummary
+
+```
+
+Clusters 5 and 6 are convoluted, having 3 and 4 clusters make more sense for our business problem. 
+
+Let's look at the CH index for clusters 3 to 7.  
+
+```{r  echo = FALSE, message=FALSE, warning=FALSE}
+
+set.seed(12)
+#
+# wss <- (nrow(social_ns)-1)*sum(apply(social_ns,2,var))
+k_grid = seq(2, 7, by=1)
+CH_grid = seq(2,7, by=1)
+N = nrow(social_ns)
+
+ for (i in 1:6) {
+  cluster_k = kmeans(social_ns, k_grid[i], nstart=50)
+  W = cluster_k$tot.withinss
+  B = cluster_k$betweenss
+  CH_grid[i] = (B/W)*((N-k_grid[i])/(k_grid[i]-1))
+}
+
+ch_data = data.frame(k_grid, CH_grid)
+
+chp = ggplot(data = ch_data) + 
+  geom_point(mapping = aes(x = ch_data$k_grid, y = ch_data$CH_grid)) +
+  geom_line(mapping = aes(x = ch_data$k_grid, y = ch_data$CH_grid))
+
+grid.arrange(chp, nrow = 1, ncol = 1)
+```
+
+Maximum value of CH index is 3 and there is a drop in CH value if number of clusters is increased. 
+
+From the plot of clusters across PC 1 and 2, cluster 3 values look more distinct in the principal component space.
+
+Let's explore what these principle comonents are actually made of - 
+
+```{r  echo = FALSE, message=FALSE, warning=FALSE}
+#perform PCA
+
+pr.out = prcomp(social_ns,scale=TRUE)
+#plot(pr.out)
+#summary(pr.out)
+
+# scores = pr.out$x
+# qplot(scores[,1], scores[,2], xlab='Component 1', colour = clust3$cluster, ylab='Component 2')
+
+loadings = pr.out$rotation
+o1 = order(loadings[,1], decreasing=TRUE)
+print("PC1 head")
+colnames(social_ns)[head(o1,10)]
+print("PC1 tail")
+colnames(social_ns)[tail(o1,10)]
+ 
+o2 = order(loadings[,2], decreasing=TRUE)
+print("PC2 head")
+colnames(social_ns)[head(o2,10)]
+print("PC2 tail")
+colnames(social_ns)[tail(o2,10)]
+
+```
+
+```{r  echo = FALSE, message=FALSE, warning=FALSE}
+set.seed(12)
+
+attach(social)
+social_grp2 = social
+social_grp2$health.enthusiasts= food+cooking+home_and_garden+health_nutrition+personal_fitness+sports_playing+sports_fandom
+social_grp2$elderly = politics+news+religion+current_events+family+parenting+shopping+business+small_business+eco+automotive
+social_grp2$youth = tv_film+music+online_gaming+beauty+dating+fashion+college_uni+school+art+crafts+computers+travel+outdoors+chatter
+social_grp2$othr = spam+uncategorized+adult+photo_sharing
+
+
+cluster_final = kmeans(social_ns, 3, nstart=25)
+
+# append cluster assignment
+mydata <- data.frame(social_grp2, cluster_final$cluster)
+#View(mydata)
+
+```
+
+
+
+Cluster Profiling:
+
+After looking at the top and bottom of first 2 principal components, we can see there is group of people who are fitness enthisiasts and are tweeting more about health, nutrition, food, cooking etc - Let's call them "Health Enthusiasts"
+
+Similarly, there is another set of people who are more into talking about politics, news, current events, parenting, businesss etc - Let's call them "Elderly"
+
+And finaly, a third set of people who are into fashion, tv, films, music, college and university etc - Let's call them "Youth"
+
+I have created macro categories by clubbing similar categories of tweets based on the identifiction of interest areas for our 3 clusters. For example health enthusiasts have all the health, fitness, food and cooking replated tweets clubbed together and similalry for other categories.
+
+Cataegories such as adult, spam, uncategorized into others and are not considered in creation of these macro categories of tweets.
+
+Let's look at the mean for these mcro categories by cluster - 
+
+```{r  echo = FALSE, message=FALSE, warning=FALSE}
+
+summarise_at(group_by(mydata,cluster_final.cluster),vars(health.enthusiasts,elderly,youth),funs(mean(.,na.rm=TRUE)))
+
+```
+Clearly, cluster 1 belongs to the "Health enthusiasts", cluster 3 is the group of "Elderly" and "Youth" is cluster 2.
+
+Density plots shown below shows how the distribution of the points for these macro categories across 3 clusters - 
+
+```{r  echo = FALSE, message=FALSE, warning=FALSE}
+
+par(mfrow=c(2,2))
+g = ggplot(mydata, aes(x=health.enthusiasts))
+g + geom_density(aes(fill=factor(cluster_final.cluster)))
+
+g = ggplot(mydata, aes(x=elderly))
+g + geom_density(aes(fill=factor(cluster_final.cluster)))
+
+g = ggplot(mydata, aes(x=youth))
+g + geom_density(aes(fill=factor(cluster_final.cluster)))
+```
+
+## Q6 Association rule mining
+Use the data on grocery purchases in groceries.txt and find some interesting association rules for these shopping baskets. Pick your own thresholds for lift and confidence; just be clear what these thresholds are and how you picked them. Do your discovered item sets make sense? Present your discoveries in an interesting and concise way.
+
+Notes:
+
+Like with the first set of exercises: this is an exercise in visual and numerical story-telling. Do be clear in your description of what you've done, but keep the focus on the data, the figures, and the insights your analysis has drawn from the data.
+The data file is a list of baskets: one row per basket, with multiple items per row separated by commas. You'll have to cobble together a few utilities for processing this into the format expected by the "arules" package. (This is not intrinsically all that hard, but it is the kind of wrinkle you'll encounter frequently on real problems, where your software package expects data in one format and the data comes in a different format. Figuring out how to bridge that gap is part of the assignment, and so we won't be giving tips on this front.)
+
+```{r  echo = FALSE, message=FALSE, warning=FALSE}
+#Required librariers for Asoociation Rule Mining
+rm(list=ls())
+library(tidyverse)
+library(arules)  
+library(arulesViz)
+library(png)
+```
+
+This is a dataset on Groceries with 9835 rows and 169 columns. Each row corressponds to a transaction of grocery items added to cart. The dataset is read as transactions with a delimiter of commas, so that the format is compatible with arules package.The plot shows the most frequently purchased grocery items as whole milk, other vegetables, rolls/buns etc.
+
+```{r  echo = FALSE, message=FALSE, warning=FALSE}
+#Read data as transactions: required for applying apriori algorithm
+Groceries=read.transactions("https://raw.githubusercontent.com/jgscott/STA380/master/data/groceries.txt", header = FALSE, sep = ",")
+#data(Groceries)
+dim(Groceries)
+summary(Groceries)
+inspect(Groceries[1:5])
+itemFrequencyPlot(Groceries,topN=10)
+```
+
+* Setting the apriori algorithm with the below parameter list: 
+Look at rules with support greater than 0.001, confidence greater than 0.8 and length of each transaction upto 6
+
+```{r  echo = FALSE, message=FALSE, warning=FALSE}
+#Applying apriori algorithm
+Groceryrules = apriori(Groceries, 
+                     parameter=list(support=.001, confidence=.8,  maxlen=10))
+```
+*First Table: we inspect the first 3 rules from the algorithm. For example, let's take row1. The two itemsets here are liquor,red/blush wine and bottled beer. The support represents the fraction of occurence of these itemsets together in the entire dataset. The two itemsets occur together 0.19% times in the entire dataset. The confidence shows the numberv of times bottled beer is present when the grocery basket contains liquor and red/blush wine. This shows that 90.4% of baskets which contain liquor and red/blush wine also contain bottled beer. The lift is the ratio of the confidence in bottled beer being present with liquor and red blush/wine to the total fraction of times bottled beer is present. The lower the value of the lift, the more independent these two itemsets are. Here, the lift is 11, signifying that the rule is performing well. 
+
+*Second Table: This is a subset of all itemsets which have a lift greater than 5, signifying higher level of co-occurrence between them. We can see that lift is higher with higher confidence and lower number of times of occurrence of an itemset.For example, the confidence for yogurt is higher than tropical fruit in line 3. However, the lift for tropical fruit seems to be higher than yogurt. Thic could be because tropical fruit maybe a more rarely purchased item than yogurt, thereby increasing its lift.
+
+*Third table: List of rows with confidence >0.6. This is the subset where the conditional probability of an itemset in rhs occurring is higher if corresponding itemset in lhs is present. We also notice certain cases here where confidence is 1. For example, line 10 suggests that if rice and sugar are present in the basket, then there is 100% probability of whole milk being present in the same basket.
+
+*Fourth table: We see in the output that the support value across different rows in the dataset is low. This could be because each basket is highly varied, based on personal choice and hence, frequency of the same basket occurring may not be high. For a support value greater than 0.003. we find only one row. We say in the entire dataset, the chances of citrus fruit, tropical fruit, root vegetables, whole milk and other vegetables occurring together is 0.3%
+
+*Fifth table: These are candidates with the highest lift, showing the best performance of the association rule generated.
+
+```{r  echo = FALSE, message=FALSE, warning=FALSE}
+#Checking data for different sets of rules
+inspect(Groceryrules[1:3])
+inspect(subset(Groceryrules, subset=lift > 5))
+inspect(subset(Groceryrules, subset=confidence > 0.6))
+inspect(subset(Groceryrules, subset=lift > 10 & confidence > 0.5))
+inspect(subset(Groceryrules, support > 0.003))
+inspect(subset(Groceryrules, lift >10))
+```
+
+* Rules sorted in order of confidence. We can see there are many with 100% confidence, signifying if itemset in lhs is present, then there is 100% probability of itemset in rhs.
+
+* Removing redundant rules reduces the total number of rules from 410 to 392.
+
+```{r  echo = FALSE, message=FALSE, warning=FALSE}
+Groceryrules=sort(Groceryrules, by="confidence", decreasing=T)
+Groceryrules =Groceryrules[!is.redundant(Groceryrules)]
+inspect(head(Groceryrules, 10))
+length(Groceryrules)
+```
+
+* Plot1: Scatter plot for all rules with lift as shaded color. We can see that as the support increases, lift reduces
+
+* Plot2: Scatter plot for all rules with confidence as shaded color. We can see there are lesser numner of grocery baskets with support greater than 0.002 and most of them, seem to have low confidence.
+
+* Plot3: Support vs confidence for baskets with different number of items:3,4,5,6. Mpst of the higher order items seem to have low support, which could mean that more the number of items in the basket, the probability of it co-occurring with another itemset is lower.
+
+* Plot4: Visual graph of the top 10 rules by confidence. We can see that the support seems to be low for all the high confidence rows. For example, rule1: There is 100% probability of a basket conatining whole milk if it has rice and sugar, but the number of items these 2 itemsets occur in the entire dataset is very low
+
+* Plot5: This is a Parallel coordinates plot.If you look at the bottom of the plot, we can say that if a person purchases oil and rice, he/she is likely to purchase root vegetables as well. The darker red arrow at the top shows that there it is extremely likely for a person who purchases red/blush wine to purchase bottled beer as well.
+
+```{r  echo = FALSE, message=FALSE, warning=FALSE}
+#Different methods of plotting in R
+plot(Groceryrules)
+plot(Groceryrules, measure = c("support", "lift"), shading = "confidence")
+plot(Groceryrules, method='two-key plot')
+top10_confidence=head(Groceryrules, n = 10, by = "confidence")
+#plot(top10_confidence, method = "graph",  engine = "htmlwidget")
+top10_lift=head(Groceryrules, n=10, by="lift")
+plot(top10_lift, method="paracoord")
+
+```
+
+Here, we are selecting a subset by setting up thresholds on support and confidence and analysing the behavior. The graph highlights the rule with the highest lift, i.e other vegetables on citrus fruit, tropical fruit, root vegetables and whole milk. This is bound to be the highest performing rule within this subset.
+
+```{r  echo = FALSE, message=FALSE, warning=FALSE}
+#Choose a subset based on confidence and support thresholds and show graphs
+subset1 = subset(Groceryrules, subset=confidence > 0.8 & support > 0.002)
+summary(subset1)
+inspect(subset1)
+plot(subset1, method='graph')
+```
+
+Checking for specific items, for example, whole milk. We can see that with itemsets such as rice and sugar, canned fish and hygiene articles, root vegetables, butter,rice etc, there is 100% probability that whole milk will be purchased with it. Primarily, it looks like if there are other dairy products in the basket, then there is 100% probability of whole milk getting added.
+```{r  echo = FALSE, message=FALSE, warning=FALSE}
+milkrules= subset(Groceryrules, items %in% "whole milk")
+milkrules=sort(milkrules,by='confidence',decreasing = T)
+inspect(head(milkrules,5))
+```
+
+Since the graphs here are not providing a lot of clarity, we will try builing some through Gephi. First step is to save the Association rules, so that it can be accessed by Gephi
+```{r  echo = FALSE, message=FALSE, warning=FALSE}
+#Save Grocery Rules for Gephi plotting
+#saveAsGraph(head(Groceryrules, n = 1000, by = "lift"), file = "Groceryrules.graphml")
+```
+Gephi image shared separately. The rendered Gephi image showcases the association rules generated from Groceries. The size of the nodes represents the degrees at each node. We can see that whole milk, other vegetables, root vegetables, yogurt are connected to most other itemsets and hence, has the highest degree in the plot.We have also filtered out the degrees from 6 onwards, to reduce clutter. We also ran statistics to understand the average path length between any two nodes and it turns out to be 3.73.
+
+#Gephi image is sent seperately - https://github.com/udbhav13/PredictiveAnalytics-Assignment/blob/master/Groceries.png
+
+
+
+
+
+
+
+
+```{r echo= FALSE}
+# library(arules)
+# if(sessionInfo()['basePkgs']=="dplyr" | sessionInfo()['otherPkgs']=="dplyr"){
+#   detach(package:dplyr, unload=TRUE)
+# }
+# library(plyr)
+# 
+# df_groceries <- read.csv("https://raw.githubusercontent.com/jgscott/STA380/master/data/groceries.txt",header = FALSE,sep =',',na.strings = "NA")
+# #View(groceries)
+# dim(df_groceries)
+# 
+# txn = read.transactions(file="https://raw.githubusercontent.com/jgscott/STA380/master/data/groceries.txt", rm.duplicates= TRUE, format="basket",sep=",",cols=1)
+# dim(txn)
+# 
+# 
+# basket_rules <- apriori(txn,parameter = list(sup = 0.011, conf = 0.5,target="rules"))
+# 
+# inspect(basket_rules)
+# 
+# #Alternative to inspect() is to convert rules to a dataframe and then use View()
+# df_basket <- as(basket_rules,"data.frame")
+# #View(df_basket)
+# 
+# library(arulesViz)
+# plot(basket_rules)
+# plot(basket_rules, method = "grouped", control = list(k = 5))
+# plot(basket_rules, method="graph", control=list(type="items"),cex=0.7)
+# #plot(basket_rules, method="paracoord",  control=list(alpha=.5, reorder=TRUE))
+# plot(basket_rules,measure=c("support","lift"),shading="confidence",engibe='interactive')
+# # itemFrequencyPlot(txn, topN = 5)
+
+```
+
