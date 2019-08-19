@@ -1,7 +1,179 @@
-Market segmentation and Association rule mining
+STA Assignment
 ================
 
-## Market segmentation
+## Q1 Visual story telling part 1: green buildings
+
+I disagree with the on-staff stats guru on some points mentioned
+below:  
+Which Cluster is the location in:  
+The excel guru looks at the rent of the whole market and fails to
+consider cluster in the whole economic calculation. Each cluster has a
+different rent spectrum. Moreover, the green building in each cluster
+has a different trend of market rate as compared to the non-green
+buildings in the same cluster. In some clusters, green buildings are
+less expensive than the others and in others the difference is very
+different from others. So $2.6 more per squarefoot is a vague estimate.
+It can easily be more or less depending on the cluster.
+![](STA380-Assignment_files/figure-gfm/unnamed-chunk-2-1.png)<!-- -->
+Can we assume minimum occupancy rate of 90%?  
+Half of the properties have below 90% occupancy rate. Though green
+properties are more occupied than non-green but still 90% is a very
+large assumption on part of the stats-guru. Moreover, some clusters
+don’t have that much occupancy, which can mean that there is not much
+demand in those clusters ruling out the idea of investing in those
+clusters.
+
+    ##    Min. 1st Qu.  Median    Mean 3rd Qu.    Max. 
+    ##    0.00   77.85   89.53   82.61   96.44  100.00
+
+![](STA380-Assignment_files/figure-gfm/unnamed-chunk-3-1.png)<!-- -->![](STA380-Assignment_files/figure-gfm/unnamed-chunk-3-2.png)<!-- -->
+Who pays the utility bills?  
+The stats-guru does not take into account whether the utility bills are
+paid by renter or not. Rents are obviously higher for utility cost
+included in rent. There seem to be both green and non-green buildings in
+the two categories. We need to account for utility charges if either
+case is there.
+![](STA380-Assignment_files/figure-gfm/unnamed-chunk-4-1.png)<!-- -->
+Electricity cost and Gas costs  
+Both Electricity and Gas costs are different for different clusters.
+![](STA380-Assignment_files/figure-gfm/unnamed-chunk-5-1.png)<!-- -->
+
+![](STA380-Assignment_files/figure-gfm/unnamed-chunk-6-1.png)<!-- --> Do
+all clusters have equally tall buildings?  
+Each cluster has a different range of stories of a building. As a trend,
+green buildings are usually taller cluster-wise. The trend in the story
+reflects the demand in the area and there also might be additional legal
+restrictions in some areas as well.
+![](STA380-Assignment_files/figure-gfm/unnamed-chunk-7-1.png)<!-- -->
+CONCLUSION  
+\-The recommendation put forward by the stats guru seems pretty vague
+and incomplete. He fails to consider factors which might have an
+economic impact both positively and negatively.  
+\-He did not consider the cluster-wise distribution of rents and then
+the difference of green and non-green property’s rent.  
+\-His assumption of atleast 90% occupancy seems vague.  
+\-He does not account utility costs nor does he consider whether it is
+included in the rent or not.  
+\-All clusters do not have high sky scrapers. One hypothesis is that it
+can indicate demand or legal restrictions.
+
+\#Q2 VISUAL STROY TELLING - FLIGHTS AT ABIA
+
+We are going to take a look at the ABIA data from the eyes and interest
+of a frequent flyer staying in Austin. As a frequent flyer I would want
+to know -
+
+1)  What percentage of flights in and out of Austin are delayed ?
+2)  What is the average amount of times by which flights in and out of
+    Austin get delayed?
+3)  What are the Origin(flights to Austin) and Destination(flights from
+    Austin) with the most cancellation blues?
+4)  What causes these cancellations ?
+5)  What are the airline carriers one should expect most delays with?
+6)  Which are the best Origin/Dest to expect pre-time arrival/departures
+    to/from Austin ?
+7)  Which airports do I expect to spend the maximum time Taxing In and
+    Out?
+8)  What are the times of the day I should expect the maximum arrival
+    and departure delays in/out of Austin?
+9)  Are these trends better/worse on some days of the week? Whether I
+    could beat this?
+
+But first, PIPING GROUPING AND SUMMARISING the data.
+
+1)  What percentage of flights in and out of Austin are delayed ?
+
+DEPARTURES
+![](STA380-Assignment_files/figure-gfm/unnamed-chunk-10-1.png)<!-- -->
+
+![](STA380-Assignment_files/figure-gfm/unnamed-chunk-11-1.png)<!-- -->
+
+![](STA380-Assignment_files/figure-gfm/unnamed-chunk-12-1.png)<!-- -->
+
+ARRIVALS
+![](STA380-Assignment_files/figure-gfm/unnamed-chunk-13-1.png)<!-- -->
+
+![](STA380-Assignment_files/figure-gfm/unnamed-chunk-14-1.png)<!-- -->
+
+![](STA380-Assignment_files/figure-gfm/unnamed-chunk-15-1.png)<!-- -->
+
+2)  What is the average amount of times by which flights in and out of
+    Austin get delayed?
+
+![](STA380-Assignment_files/figure-gfm/unnamed-chunk-16-1.png)<!-- -->
+
+![](STA380-Assignment_files/figure-gfm/unnamed-chunk-17-1.png)<!-- -->
+
+![](STA380-Assignment_files/figure-gfm/unnamed-chunk-18-1.png)<!-- -->
+
+3)  What are the Origin(flights to Austin) and Destination(flights from
+    Austin) with the most cancellation blues?
+
+4)  How are these split by the Cancellation Codes?
+    ![](STA380-Assignment_files/figure-gfm/unnamed-chunk-19-1.png)<!-- -->
+    ![](STA380-Assignment_files/figure-gfm/unnamed-chunk-20-1.png)<!-- -->
+
+5)  What are the airline carriers one should expect most delays with?
+
+![](STA380-Assignment_files/figure-gfm/unnamed-chunk-21-1.png)<!-- -->
+
+6)  Which are the best Origin/Dest to expect pre-time arrival/departures
+    to/from Austin ?
+
+![](STA380-Assignment_files/figure-gfm/unnamed-chunk-22-1.png)<!-- -->
+
+7)  Which airports do I expect to spend the maximum time Taxing In and
+    Out?
+    ![](STA380-Assignment_files/figure-gfm/unnamed-chunk-23-1.png)<!-- -->
+
+8)  What are the times of the day I should expect the maximum arrival
+    and departure delays in/out of Austin?
+    ![](STA380-Assignment_files/figure-gfm/unnamed-chunk-24-1.png)<!-- -->
+
+9)  Are these trends better/worse on some days of the week? Whether I
+    could beat this?
+    ![](STA380-Assignment_files/figure-gfm/unnamed-chunk-25-1.png)<!-- -->
+
+![](STA380-Assignment_files/figure-gfm/unnamed-chunk-26-1.png)<!-- -->
+
+\#Q3 PORTFOLIO MODELLING
+
+PORTFOLIO 1. My Portfolio 1 consists of EFT’s that have more of a global
+outlook like.
+
+1.  VT - global reach ETF
+2.  ACWX - has a global reach minus the United States
+3.  FXI - China focussed ETF
+
+<!-- end list -->
+
+    ## The VAR for this portfolio is  98985.21
+
+PORTFOLIO 2. My portfolio 2 is a safe retirement centric ETF portfolio.
+Long time hold with guaranteed yields.
+
+1)  VYM - retirement centric high dividend yield
+2)  VGLT - safe ETF with returns on long term
+3)  BOND - 3.4% safe yield return
+4)  PGX - 5.7% safe dividend returns, risk averse
+
+<!-- end list -->
+
+    ## The VAR for this portfolio is  99594.29
+
+PORTFOLIO 3. My portfolio 3 is a diverse mix porfolio. High risk centric
+but higher returns on success too.
+
+1)  VGT - is a tech based ETF with some shares on Amazon too
+2)  XLY - is a big $12 Billion consumer fund
+3)  XBI - is a high risk ETF with money in a lot of medical startups
+4)  VNQ - is a real estate based ETF
+
+<!-- end list -->
+
+    ## The VAR for this portfolio is  91944.63
+
+## Q5 Market segmentation
 
 Consider the data in social\_marketing.csv. This was data collected in
 the course of a market-research study using followers of the Twitter
@@ -122,7 +294,7 @@ You can include R code in the document as
     ##  3rd Qu.: 0.2955   3rd Qu.: 0.2557   3rd Qu.:-0.06773   3rd Qu.:-0.227  
     ##  Max.   : 8.6689   Max.   :11.7953   Max.   :32.08329   Max.   :11.569
 
-![](STA380-Assignment_files/figure-gfm/unnamed-chunk-1-1.png)<!-- -->![](STA380-Assignment_files/figure-gfm/unnamed-chunk-1-2.png)<!-- -->![](STA380-Assignment_files/figure-gfm/unnamed-chunk-1-3.png)<!-- -->
+![](STA380-Assignment_files/figure-gfm/unnamed-chunk-30-1.png)<!-- -->![](STA380-Assignment_files/figure-gfm/unnamed-chunk-30-2.png)<!-- -->![](STA380-Assignment_files/figure-gfm/unnamed-chunk-30-3.png)<!-- -->
 Few insights - \* Categories like fashion, beauty, dating etc are
 correlated, similarly for . \* Categories like spam, adult are also
 correlated
@@ -134,7 +306,7 @@ correlated
 To decide how many clusters exist in our data, let’s look at Elbow and
 Silhouette plots to explore further.
 
-![](STA380-Assignment_files/figure-gfm/unnamed-chunk-2-1.png)<!-- -->
+![](STA380-Assignment_files/figure-gfm/unnamed-chunk-31-1.png)<!-- -->
 
 There is no elbow formation in the elbow plot. The silhouette plot is
 also not able to decide upon a rational number of clusters for the
@@ -143,7 +315,7 @@ marketing strategy for the custome segments.
 
 Let’s explore how 3,4,5 and 6 clusters look like.
 
-![](STA380-Assignment_files/figure-gfm/unnamed-chunk-3-1.png)<!-- -->
+![](STA380-Assignment_files/figure-gfm/unnamed-chunk-32-1.png)<!-- -->
 
     ##   cluster Total.withinss betweenss
     ## 1       3       253144.8  30571.22
@@ -157,7 +329,7 @@ for our business problem.
 
 Let’s look at the CH index for clusters 3 to 7.
 
-![](STA380-Assignment_files/figure-gfm/unnamed-chunk-4-1.png)<!-- -->
+![](STA380-Assignment_files/figure-gfm/unnamed-chunk-33-1.png)<!-- -->
 
 Maximum value of CH index is 3 and there is a drop in CH value if number
 of clusters is increased.
@@ -233,14 +405,15 @@ Density plots shown below shows how the distribution of the points for
 these macro categories across 3 clusters
 -
 
-![](STA380-Assignment_files/figure-gfm/unnamed-chunk-8-1.png)<!-- -->![](STA380-Assignment_files/figure-gfm/unnamed-chunk-8-2.png)<!-- -->![](STA380-Assignment_files/figure-gfm/unnamed-chunk-8-3.png)<!-- -->
+![](STA380-Assignment_files/figure-gfm/unnamed-chunk-37-1.png)<!-- -->![](STA380-Assignment_files/figure-gfm/unnamed-chunk-37-2.png)<!-- -->![](STA380-Assignment_files/figure-gfm/unnamed-chunk-37-3.png)<!-- -->
 
-Association rule mining Use the data on grocery purchases in
-groceries.txt and find some interesting association rules for these
-shopping baskets. Pick your own thresholds for lift and confidence; just
-be clear what these thresholds are and how you picked them. Do your
-discovered item sets make sense? Present your discoveries in an
-interesting and concise way.
+## Q6 Association rule mining
+
+Use the data on grocery purchases in groceries.txt and find some
+interesting association rules for these shopping baskets. Pick your own
+thresholds for lift and confidence; just be clear what these thresholds
+are and how you picked them. Do your discovered item sets make sense?
+Present your discoveries in an interesting and concise way.
 
 Notes:
 
@@ -255,10 +428,14 @@ intrinsically all that hard, but it is the kind of wrinkle you’ll
 encounter frequently on real problems, where your software package
 expects data in one format and the data comes in a different format.
 Figuring out how to bridge that gap is part of the assignment, and so we
-won’t be giving tips on this
-front.)
+won’t be giving tips on this front.)
 
-### This is a dataset on Groceries with 9835 rows and 169 columns. Each row corressponds to a transaction of grocery items added to cart. The dataset is read as transactions with a delimiter of commas, so that the format is compatible with arules package.The plot shows the most frequently purchased grocery items as whole milk, other vegetables, rolls/buns etc.
+This is a dataset on Groceries with 9835 rows and 169 columns. Each row
+corressponds to a transaction of grocery items added to cart. The
+dataset is read as transactions with a delimiter of commas, so that the
+format is compatible with arules package.The plot shows the most
+frequently purchased grocery items as whole milk, other vegetables,
+rolls/buns etc.
 
     ## [1] 9835  169
 
@@ -306,10 +483,13 @@ front.)
     ##      other vegetables,        
     ##      whole milk}
 
-![](STA380-Assignment_files/figure-gfm/unnamed-chunk-10-1.png)<!-- -->
-\#\#\# Setting the apriori algorithm with the below parameter list:
-\#\#\# Look at rules with support greater than 0.001, confidence greater
-than 0.8 and length of each transaction upto 6
+![](STA380-Assignment_files/figure-gfm/unnamed-chunk-39-1.png)<!-- -->
+
+  - Setting the apriori algorithm with the below parameter list: Look at
+    rules with support greater than 0.001, confidence greater than 0.8
+    and length of each transaction upto 6
+
+<!-- end list -->
 
     ## Apriori
     ## 
@@ -333,15 +513,47 @@ than 0.8 and length of each transaction upto 6
     ## writing ... [410 rule(s)] done [0.00s].
     ## creating S4 object  ... done [0.00s].
 
-### First Table: we inspect the first 3 rules from the algorithm. For example, let’s take row1. The two itemsets here are liquor,red/blush wine and bottled beer. The support represents the fraction of occurence of these itemsets together in the entire dataset. The two itemsets occur together 0.19% times in the entire dataset. The confidence shows the numberv of times bottled beer is present when the grocery basket contains liquor and red/blush wine. This shows that 90.4% of baskets which contain liquor and red/blush wine also contain bottled beer. The lift is the ratio of the confidence in bottled beer being present with liquor and red blush/wine to the total fraction of times bottled beer is present. The lower the value of the lift, the more independent these two itemsets are. Here, the lift is 11, signifying that the rule is performing well.
+\*First Table: we inspect the first 3 rules from the algorithm. For
+example, let’s take row1. The two itemsets here are liquor,red/blush
+wine and bottled beer. The support represents the fraction of occurence
+of these itemsets together in the entire dataset. The two itemsets occur
+together 0.19% times in the entire dataset. The confidence shows the
+numberv of times bottled beer is present when the grocery basket
+contains liquor and red/blush wine. This shows that 90.4% of baskets
+which contain liquor and red/blush wine also contain bottled beer. The
+lift is the ratio of the confidence in bottled beer being present with
+liquor and red blush/wine to the total fraction of times bottled beer is
+present. The lower the value of the lift, the more independent these two
+itemsets are. Here, the lift is 11, signifying that the rule is
+performing well.
 
-### Second Table: This is a subset of all itemsets which have a lift greater than 5, signifying higher level of co-occurrence between them. We can see that lift is higher with higher confidence and lower number of times of occurrence of an itemset.For example, the confidence for yogurt is higher than tropical fruit in line 3. However, the lift for tropical fruit seems to be higher than yogurt. Thic could be because tropical fruit maybe a more rarely purchased item than yogurt, thereby increasing its lift.
+\*Second Table: This is a subset of all itemsets which have a lift
+greater than 5, signifying higher level of co-occurrence between them.
+We can see that lift is higher with higher confidence and lower number
+of times of occurrence of an itemset.For example, the confidence for
+yogurt is higher than tropical fruit in line 3. However, the lift for
+tropical fruit seems to be higher than yogurt. Thic could be because
+tropical fruit maybe a more rarely purchased item than yogurt, thereby
+increasing its lift.
 
-### Third table: List of rows with confidence \>0.6. This is the subset where the conditional probability of an itemset in rhs occurring is higher if corresponding itemset in lhs is present. We also notice certain cases here where confidence is 1. For example, line 10 suggests that if rice and sugar are present in the basket, then there is 100% probability of whole milk being present in the same basket.
+\*Third table: List of rows with confidence \>0.6. This is the subset
+where the conditional probability of an itemset in rhs occurring is
+higher if corresponding itemset in lhs is present. We also notice
+certain cases here where confidence is 1. For example, line 10 suggests
+that if rice and sugar are present in the basket, then there is 100%
+probability of whole milk being present in the same basket.
 
-### Fourth table: We see in the output that the support value across different rows in the dataset is low. This could be because each basket is highly varied, based on personal choice and hence, frequency of the same basket occurring may not be high. For a support value greater than 0.003. we find only one row. We say in the entire dataset, the chances of citrus fruit, tropical fruit, root vegetables, whole milk and other vegetables occurring together is 0.3%
+\*Fourth table: We see in the output that the support value across
+different rows in the dataset is low. This could be because each basket
+is highly varied, based on personal choice and hence, frequency of the
+same basket occurring may not be high. For a support value greater than
+0.003. we find only one row. We say in the entire dataset, the chances
+of citrus fruit, tropical fruit, root vegetables, whole milk and other
+vegetables occurring together is 0.3%
 
-### Fifth table: These are candidates with the highest lift, showing the best performance of the association rule generated.
+\*Fifth table: These are candidates with the highest lift, showing the
+best performance of the association rule
+    generated.
 
     ##     lhs                        rhs            support     confidence
     ## [1] {liquor,red/blush wine} => {bottled beer} 0.001931876 0.9047619 
@@ -1852,9 +2064,15 @@ than 0.8 and length of each transaction upto 6
     ##     lift     count
     ## [1] 11.23527 19
 
-### Rules sorted in order of confidence. We can see there are many with 100% confidence, signifying if itemset in lhs is present, then there is 100% probability of itemset in rhs.
+  - Rules sorted in order of confidence. We can see there are many with
+    100% confidence, signifying if itemset in lhs is present, then there
+    is 100% probability of itemset in rhs.
 
-### Removing redundant rules reduces the total number of rules from 410 to 392.
+  - Removing redundant rules reduces the total number of rules from 410
+    to
+    392.
+
+<!-- end list -->
 
     ##      lhs                     rhs                    support confidence     lift count
     ## [1]  {rice,                                                                          
@@ -1888,22 +2106,39 @@ than 0.8 and length of each transaction upto 6
 
     ## [1] 392
 
-### Plot1: Scatter plot for all rules with lift as shaded color. We can see that as the support increases, lift reduces
+  - Plot1: Scatter plot for all rules with lift as shaded color. We can
+    see that as the support increases, lift reduces
 
-### Plot2: Scatter plot for all rules with confidence as shaded color. We can see there are lesser numner of grocery baskets with support greater than 0.002 and most of them, seem to have low confidence.
+  - Plot2: Scatter plot for all rules with confidence as shaded color.
+    We can see there are lesser numner of grocery baskets with support
+    greater than 0.002 and most of them, seem to have low confidence.
 
-### Plot3: Support vs confidence for baskets with different number of items:3,4,5,6. Mpst of the higher order items seem to have low support, which could mean that more the number of items in the basket, the probability of it co-occurring with another itemset is lower.
+  - Plot3: Support vs confidence for baskets with different number of
+    items:3,4,5,6. Mpst of the higher order items seem to have low
+    support, which could mean that more the number of items in the
+    basket, the probability of it co-occurring with another itemset is
+    lower.
 
-### Plot4: Visual graph of the top 10 rules by confidence. We can see that the support seems to be low for all the high confidence rows. For example, rule1: There is 100% probability of a basket conatining whole milk if it has rice and sugar, but the number of items these 2 itemsets occur in the entire dataset is very low
+  - Plot4: Visual graph of the top 10 rules by confidence. We can see
+    that the support seems to be low for all the high confidence rows.
+    For example, rule1: There is 100% probability of a basket conatining
+    whole milk if it has rice and sugar, but the number of items these 2
+    itemsets occur in the entire dataset is very low
 
-### Plot5: This is a Parallel coordinates plot.If you look at the bottom of the plot, we can say that if a person purchases oil and rice, he/she is likely to purchase root vegetables as well. The darker red arrow at the top shows that there it is extremely likely for a person who purchases red/blush wine to purchase bottled beer as well.
+  - Plot5: This is a Parallel coordinates plot.If you look at the bottom
+    of the plot, we can say that if a person purchases oil and rice,
+    he/she is likely to purchase root vegetables as well. The darker red
+    arrow at the top shows that there it is extremely likely for a
+    person who purchases red/blush wine to purchase bottled beer as
+    well.
 
-![](STA380-Assignment_files/figure-gfm/unnamed-chunk-14-1.png)<!-- -->![](STA380-Assignment_files/figure-gfm/unnamed-chunk-14-2.png)<!-- -->![](STA380-Assignment_files/figure-gfm/unnamed-chunk-14-3.png)<!-- -->![](STA380-Assignment_files/figure-gfm/unnamed-chunk-14-4.png)<!-- -->
-\#\#\# Here, we are selecting a subset by setting up thresholds on
-support and confidence and analysing the behavior. The graph highlights
-the rule with the highest lift, i.e other vegetables on citrus fruit,
-tropical fruit, root vegetables and whole milk. This is bound to be the
-highest performing rule within this subset.
+![](STA380-Assignment_files/figure-gfm/unnamed-chunk-43-1.png)<!-- -->![](STA380-Assignment_files/figure-gfm/unnamed-chunk-43-2.png)<!-- -->![](STA380-Assignment_files/figure-gfm/unnamed-chunk-43-3.png)<!-- -->![](STA380-Assignment_files/figure-gfm/unnamed-chunk-43-4.png)<!-- -->
+
+Here, we are selecting a subset by setting up thresholds on support and
+confidence and analysing the behavior. The graph highlights the rule
+with the highest lift, i.e other vegetables on citrus fruit, tropical
+fruit, root vegetables and whole milk. This is bound to be the highest
+performing rule within this subset.
 
     ## set of 8 rules
     ## 
@@ -1955,13 +2190,14 @@ highest performing rule within this subset.
     ## [8] {curd,                                                                             
     ##      hamburger meat}        => {whole milk}       0.002541942  0.8064516 3.156169    25
 
-![](STA380-Assignment_files/figure-gfm/unnamed-chunk-15-1.png)<!-- -->
-\#\#\# Checking for specific items, for example, whole milk. We can see
-that with itemsets such as rice and sugar, canned fish and hygiene
-articles, root vegetables, butter,rice etc, there is 100% probability
-that whole milk will be purchased with it. Primarily, it looks like if
-there are other dairy products in the basket, then there is 100%
-probability of whole milk getting
+![](STA380-Assignment_files/figure-gfm/unnamed-chunk-44-1.png)<!-- -->
+
+Checking for specific items, for example, whole milk. We can see that
+with itemsets such as rice and sugar, canned fish and hygiene articles,
+root vegetables, butter,rice etc, there is 100% probability that whole
+milk will be purchased with it. Primarily, it looks like if there are
+other dairy products in the basket, then there is 100% probability of
+whole milk getting
     added.
 
     ##     lhs                     rhs              support confidence     lift count
@@ -1979,9 +2215,18 @@ probability of whole milk getting
     ##      domestic eggs,                                                           
     ##      soft cheese}        => {whole milk} 0.001016777          1 3.913649    10
 
-### Since the graphs here are not providing a lot of clarity, we will try builing some through Gephi. First step is to save the Association rules, so that it can be accessed by Gephi
+Since the graphs here are not providing a lot of clarity, we will try
+builing some through Gephi. First step is to save the Association rules,
+so that it can be accessed by Gephi
 
-### Gephi image shared separately. The rendered Gephi image showcases the association rules generated from Groceries. The size of the nodes represents the degrees at each node. We can see that whole milk, other vegetables, root vegetables, yogurt are connected to most other itemsets and hence, has the highest degree in the plot.We have also filtered out the degrees from 6 onwards, to reduce clutter. We also ran statistics to understand the average path length between any two nodes and it turns out to be 3.73.
+Gephi image shared separately. The rendered Gephi image showcases the
+association rules generated from Groceries. The size of the nodes
+represents the degrees at each node. We can see that whole milk, other
+vegetables, root vegetables, yogurt are connected to most other itemsets
+and hence, has the highest degree in the plot.We have also filtered out
+the degrees from 6 onwards, to reduce clutter. We also ran statistics to
+understand the average path length between any two nodes and it turns
+out to be 3.73.
 
-\#\#\#Gephi image is sent seperately -
+\#Gephi image is sent seperately -
 <https://github.com/udbhav13/PredictiveAnalytics-Assignment/blob/master/Groceries.png>
