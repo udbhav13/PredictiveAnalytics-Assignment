@@ -1,0 +1,108 @@
+---
+title: "Association Rule Mining"
+author: "Neha"
+date: "8/18/2019"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+
+```{r}
+#Required librariers for Asoociation Rule Mining
+rm(list=ls())
+install.packages("png")
+library(tidyverse)
+library(arules)  
+library(arulesViz)
+library(png)
+```
+### This is a dataset on Groceries with 9835 rows and 169 columns. Each row corressponds to a transaction of grocery items added to cart. The dataset is read as transactions with a delimiter of commas, so that the format is compatible with arules package.The plot shows the most frequently purchased grocery items as whole milk, other vegetables, rolls/buns etc.
+```{r}
+#Read data as transactions: required for applying apriori algorithm
+Groceries=read.transactions("https://raw.githubusercontent.com/jgscott/STA380/master/data/groceries.txt", header = FALSE, sep = ",")
+data(Groceries)
+dim(Groceries)
+summary(Groceries)
+inspect(Groceries[1:5])
+itemFrequencyPlot(Groceries,topN=10)
+```
+### Setting the apriori algorithm with the below parameter list: 
+### Look at rules with support greater than 0.001, confidence greater than 0.8 and length of each transaction upto 6
+```{r}
+#Applying apriori algorithm
+Groceryrules = apriori(Groceries, 
+                     parameter=list(support=.001, confidence=.8,  maxlen=10))
+```
+### First Table: we inspect the first 3 rules from the algorithm. For example, let's take row1. The two itemsets here are liquor,red/blush wine and bottled beer. The support represents the fraction of occurence of these itemsets together in the entire dataset. The two itemsets occur together 0.19% times in the entire dataset. The confidence shows the numberv of times bottled beer is present when the grocery basket contains liquor and red/blush wine. This shows that 90.4% of baskets which contain liquor and red/blush wine also contain bottled beer. The lift is the ratio of the confidence in bottled beer being present with liquor and red blush/wine to the total fraction of times bottled beer is present. The lower the value of the lift, the more independent these two itemsets are. Here, the lift is 11, signifying that the rule is performing well. 
+
+### Second Table: This is a subset of all itemsets which have a lift greater than 5, signifying higher level of co-occurrence between them. We can see that lift is higher with higher confidence and lower number of times of occurrence of an itemset.For example, the confidence for yogurt is higher than tropical fruit in line 3. However, the lift for tropical fruit seems to be higher than yogurt. Thic could be because tropical fruit maybe a more rarely purchased item than yogurt, thereby increasing its lift.
+
+### Third table: List of rows with confidence >0.6. This is the subset where the conditional probability of an itemset in rhs occurring is higher if corresponding itemset in lhs is present. We also notice certain cases here where confidence is 1. For example, line 10 suggests that if rice and sugar are present in the basket, then there is 100% probability of whole milk being present in the same basket.
+
+### Fourth table: We see in the output that the support value across different rows in the dataset is low. This could be because each basket is highly varied, based on personal choice and hence, frequency of the same basket occurring may not be high. For a support value greater than 0.003. we find only one row. We say in the entire dataset, the chances of citrus fruit, tropical fruit, root vegetables, whole milk and other vegetables occurring together is 0.3%
+
+### Fifth table: These are candidates with the highest lift, showing the best performance of the association rule generated.
+
+```{r}
+#Checking data for different sets of rules
+inspect(Groceryrules[1:3])
+inspect(subset(Groceryrules, subset=lift > 5))
+inspect(subset(Groceryrules, subset=confidence > 0.6))
+inspect(subset(Groceryrules, subset=lift > 10 & confidence > 0.5))
+inspect(subset(Groceryrules, support > 0.003))
+inspect(subset(Groceryrules, lift >10))
+```
+### Rules sorted in order of confidence. We can see there are many with 100% confidence, signifying if itemset in lhs is present, then there is 100% probability of itemset in rhs.
+### Removing redundant rules reduces the total number of rules from 410 to 392.
+```{r}
+Groceryrules=sort(Groceryrules, by="confidence", decreasing=T)
+Groceryrules =Groceryrules[!is.redundant(Groceryrules)]
+inspect(head(Groceryrules, 10))
+length(Groceryrules)
+```
+### Plot1: Scatter plot for all rules with lift as shaded color. We can see that as the support increases, lift reduces
+### Plot2: Scatter plot for all rules with confidence as shaded color. We can see there are lesser numner of grocery baskets with support greater than 0.002 and most of them, seem to have low confidence.
+### Plot3: Support vs confidence for baskets with different number of items:3,4,5,6. Mpst of the higher order items seem to have low support, which could mean that more the number of items in the basket, the probability of it co-occurring with another itemset is lower.
+### Plot4: Visual graph of the top 10 rules by confidence. We can see that the support seems to be low for all the high confidence rows. For example, rule1: There is 100% probability of a basket conatining whole milk if it has rice and sugar, but the number of items these 2 itemsets occur in the entire dataset is very low
+### Plot5: This is a Parallel coordinates plot.If you look at the bottom of the plot, we can say that if a person purchases oil and rice, he/she is likely to purchase root vegetables as well. The darker red arrow at the top shows that there it is extremely likely for a person who purchases red/blush wine to purchase bottled beer as well.
+```{r}
+#Different methods of plotting in R
+plot(Groceryrules)
+plot(Groceryrules, measure = c("support", "lift"), shading = "confidence")
+plot(Groceryrules, method='two-key plot')
+top10_confidence=head(Groceryrules, n = 10, by = "confidence")
+plot(top10_confidence, method = "graph",  engine = "htmlwidget")
+top10_lift=head(Groceryrules, n=10, by="lift")
+plot(top10_lift, method="paracoord")
+
+```
+### Here, we are selecting a subset by setting up thresholds on support and confidence and analysing the behavior. The graph highlights the rule with the highest lift, i.e other vegetables on citrus fruit, tropical fruit, root vegetables and whole milk. This is bound to be the highest performing rule within this subset.
+```{r}
+#Choose a subset based on confidence and support thresholds and show graphs
+subset1 = subset(Groceryrules, subset=confidence > 0.8 & support > 0.002)
+summary(subset1)
+inspect(subset1)
+plot(subset1, method='graph')
+```
+### Checking for specific items, for example, whole milk. We can see that with itemsets such as rice and sugar, canned fish and hygiene articles, root vegetables, butter,rice etc, there is 100% probability that whole milk will be purchased with it. Primarily, it looks like if there are other dairy products in the basket, then there is 100% probability of whole milk getting added.
+```{r}
+milkrules= subset(Groceryrules, items %in% "whole milk")
+milkrules=sort(milkrules,by='confidence',decreasing = T)
+inspect(milkrules)
+```
+
+### Since the graphs here are not providing a lot of clarity, we will try builing some through Gephi. First step is to save the Association rules, so that it can be accessed by Gephi
+```{r}
+#Save Grocery Rules for Gephi plotting
+saveAsGraph(head(Groceryrules, n = 1000, by = "lift"), file = "Groceryrules.graphml")
+```
+### Gephi image shared separately. The rendered Gephi image showcases the association rules generated from Groceries. The size of the nodes represents the degrees at each node. We can see that whole milk, other vegetables, root vegetables, yogurt are connected to most other itemsets and hence, has the highest degree in the plot.We have also filtered out the degrees from 6 onwards, to reduce clutter. We also ran statistics to understand the average path length between any two nodes and it turns out to be 3.73.
+
+
+
+
+
+
