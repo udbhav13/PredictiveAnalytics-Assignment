@@ -35,5 +35,8 @@ vignettes/*.pdf
 # Shiny token, see https://shiny.rstudio.com/articles/shinyapps.html
 rsconnect/
 
-STA380-Assignment_files/
+STA380-Assignment_files
+
 .DS Store
+
+AA--1-_files
