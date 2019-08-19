@@ -36,3 +36,4 @@ vignettes/*.pdf
 rsconnect/
 
 STA380-Assignment_files/
+.DS Store
